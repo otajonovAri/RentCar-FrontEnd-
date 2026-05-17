@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd'
+import { Form, Input, Button, Card, Typography, Alert, Space, Divider } from 'antd'
 import { MailOutlined, LockOutlined, CarOutlined } from '@ant-design/icons'
+import { GoogleLogin } from '@react-oauth/google'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { authApi } from '@/api/authApi'
 import { useAuthStore } from '@/store/authStore'
-import type { ApiError } from '@/types/auth'
+import type { ApiError, AuthResponseDto } from '@/types/auth'
 import { AxiosError } from 'axios'
 
 const { Title, Text } = Typography
@@ -24,31 +25,36 @@ export default function LoginPage() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const [serverError, setServerError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   })
 
+  // Auth saqlash va yo'naltirish uchun umumiy funksiya
+  const handleAuthSuccess = (data: AuthResponseDto) => {
+    setAuth({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      userId: data.userId,
+      fullName: data.fullName,
+      email: data.email,
+      role: data.role,
+    })
+    const destination =
+      data.role === 'Customer' || data.role === 'Owner'
+        ? '/my-rentals'
+        : '/dashboard'
+    navigate(destination, { replace: true })
+  }
+
   const onSubmit = async (values: LoginForm) => {
     setServerError(null)
     setLoading(true)
     try {
       const { data } = await authApi.login(values)
-      setAuth({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-        userId: data.userId,
-        fullName: data.fullName,
-        email: data.email,
-        role: data.role,
-      })
-      // Customer va Owner → o'z shaxsiy sahifasiga, admin rollar → boshqaruv panelga
-      const destination =
-        data.role === 'Customer' || data.role === 'Owner'
-          ? '/my-rentals'
-          : '/dashboard'
-      navigate(destination, { replace: true })
+      handleAuthSuccess(data)
     } catch (err) {
       const axiosErr = err as AxiosError<ApiError>
       const detail = axiosErr.response?.data?.detail
@@ -56,10 +62,29 @@ export default function LoginPage() {
       if (status === 403) {
         setServerError('Email tasdiqlanmagan. Iltimos emailingizni tasdiqlang.')
       } else {
-        setServerError(detail ?? 'Email yoki parol noto\'g\'ri.')
+        setServerError(detail ?? "Email yoki parol noto'g'ri.")
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Google Sign-In — credential = ID token (JWT), backendga yuboramiz
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    if (!credentialResponse.credential) {
+      setServerError('Google credential olinmadi. Qayta urinib ko\'ring.')
+      return
+    }
+    setServerError(null)
+    setGoogleLoading(true)
+    try {
+      const { data } = await authApi.googleLogin(credentialResponse.credential)
+      handleAuthSuccess(data)
+    } catch (err) {
+      const axiosErr = err as AxiosError<ApiError>
+      setServerError(axiosErr.response?.data?.detail ?? "Google orqali kirishda xatolik.")
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -85,6 +110,29 @@ export default function LoginPage() {
               }
             />
           )}
+
+          {/* Google Sign-In tugmasi */}
+          <div style={styles.googleWrapper}>
+            {googleLoading ? (
+              <Button size="large" block loading style={{ height: 44 }}>
+                Google orqali kirilmoqda...
+              </Button>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setServerError("Google orqali kirishda xatolik yuz berdi.")}
+                width="100%"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+              />
+            )}
+          </div>
+
+          <Divider plain style={{ margin: '0' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>yoki email bilan</Text>
+          </Divider>
 
           <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
             <Form.Item
@@ -171,6 +219,11 @@ const styles = {
   logo: {
     fontSize: 40,
     color: '#1677ff',
+  },
+  googleWrapper: {
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
   },
   footer: {
     textAlign: 'center' as const,

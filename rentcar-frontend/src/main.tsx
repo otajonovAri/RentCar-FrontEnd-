@@ -2,6 +2,7 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App as AntApp, ConfigProvider, theme as antTheme } from 'antd'
 import uzUZ from 'antd/locale/uz_UZ'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App'
 import './index.css'
 import { useThemeStore } from './store/themeStore'
@@ -40,8 +41,12 @@ function Root() {
   )
 }
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Root />
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <Root />
+    </GoogleOAuthProvider>
   </StrictMode>
 )
