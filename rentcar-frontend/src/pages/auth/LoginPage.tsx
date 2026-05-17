@@ -121,7 +121,7 @@ export default function LoginPage() {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setServerError("Google orqali kirishda xatolik yuz berdi.")}
-                width="100%"
+                width={360}
                 size="large"
                 text="signin_with"
                 shape="rectangular"
