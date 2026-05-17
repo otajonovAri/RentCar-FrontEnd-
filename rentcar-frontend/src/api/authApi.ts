@@ -22,9 +22,9 @@ export const authApi = {
   login: (data: LoginDto) =>
     api.post<AuthResponseDto>('/api/auth/login', data),
 
-  /** Google One Tap / Sign-In — ID token backend ga yuboriladi */
-  googleLogin: (idToken: string) =>
-    api.post<AuthResponseDto>('/api/auth/google', { idToken }),
+  /** Google Sign-In — access token backend ga yuboriladi */
+  googleLogin: (accessToken: string) =>
+    api.post<AuthResponseDto>('/api/auth/google', { accessToken }),
 
   refreshToken: (data: RefreshTokenDto) =>
     api.post<AuthResponseDto>('/api/auth/refresh-token', data),
