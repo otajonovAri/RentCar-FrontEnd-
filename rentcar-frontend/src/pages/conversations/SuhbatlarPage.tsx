@@ -25,6 +25,24 @@ function formatDay(date: Date): string {
   return format(date, 'd MMMM yyyy', { locale: uz })
 }
 
+/** Role → O'zbek tilida qisqa nom */
+function roleLabel(role: string): string {
+  switch (role) {
+    case 'SuperAdmin': return 'Super Admin'
+    case 'Admin':      return 'Admin'
+    case 'Manager':    return 'Menejer'
+    case 'Owner':      return 'Egasi'
+    default:           return ''
+  }
+}
+
+/** "To'lov so'rovi — Ijara #7" → { title: "To'lov so'rovi", rental: "Ijara #7" } */
+function parseSubject(subject: string): { title: string; rental: string | null } {
+  const idx = subject.indexOf(' — ')
+  if (idx !== -1) return { title: subject.slice(0, idx), rental: subject.slice(idx + 3) }
+  return { title: subject, rental: null }
+}
+
 /** Avatar background gradient based on first letter */
 function nameToGradient(name: string): string {
   const gradients = [
@@ -329,64 +347,90 @@ export default function SuhbatlarPage() {
                 )}
 
                 {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <span style={{
-                      fontWeight:   hasUnread ? 700 : 600,
-                      fontSize:     14,
-                      color:        token.colorText,
-                      overflow:     'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace:   'nowrap',
-                      flex:         1,
-                      marginRight:  8,
-                    }}>
-                      {conv.subject}
-                    </span>
-                    <span style={{
-                      fontSize:  11,
-                      color:     hasUnread ? token.colorPrimary : token.colorTextTertiary,
-                      fontWeight: hasUnread ? 600 : 400,
-                      flexShrink: 0,
-                    }}>
-                      {timeStr}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{
-                      fontSize:     12,
-                      color:        token.colorTextSecondary,
-                      overflow:     'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace:   'nowrap',
-                      flex:         1,
-                    }}>
-                      {conv.lastMessageBody ?? 'Xabar yo\'q'}
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 6 }}>
-                      {conv.rentalId && (
-                        <CarFilled style={{ fontSize: 10, color: token.colorTextTertiary }} />
-                      )}
-                      {hasUnread && (
-                        <div style={{
-                          background:   token.colorPrimary,
-                          color:        '#fff',
-                          borderRadius: 20,
-                          minWidth:     18,
-                          height:       18,
-                          display:      'flex',
-                          alignItems:   'center',
-                          justifyContent: 'center',
-                          fontSize:     11,
-                          fontWeight:   700,
-                          padding:      '0 5px',
+                {(() => {
+                  const { title, rental } = parseSubject(conv.subject)
+                  return (
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Row 1: title + time */}
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 3 }}>
+                        <span style={{
+                          fontWeight:   hasUnread ? 700 : 600,
+                          fontSize:     14,
+                          color:        token.colorText,
+                          overflow:     'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace:   'nowrap',
+                          flex:         1,
+                          marginRight:  8,
                         }}>
-                          {conv.unreadCount}
+                          {title}
+                        </span>
+                        <span style={{
+                          fontSize:  11,
+                          color:     hasUnread ? token.colorPrimary : token.colorTextTertiary,
+                          fontWeight: hasUnread ? 600 : 400,
+                          flexShrink: 0,
+                        }}>
+                          {timeStr}
+                        </span>
+                      </div>
+
+                      {/* Row 2: rental badge + last msg */}
+                      {(rental || conv.rentalId) && (
+                        <div style={{ marginBottom: 3 }}>
+                          <span style={{
+                            display:      'inline-flex',
+                            alignItems:   'center',
+                            gap:          4,
+                            fontSize:     10,
+                            fontWeight:   600,
+                            color:        token.colorPrimary,
+                            background:   `${token.colorPrimary}15`,
+                            border:       `1px solid ${token.colorPrimary}30`,
+                            borderRadius: 10,
+                            padding:      '1px 7px',
+                          }}>
+                            <CarFilled style={{ fontSize: 9 }} />
+                            {rental ?? `Ijara #${conv.rentalId}`}
+                          </span>
                         </div>
                       )}
+
+                      {/* Row 3: last message + unread badge */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{
+                          fontSize:     12,
+                          color:        token.colorTextSecondary,
+                          overflow:     'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace:   'nowrap',
+                          flex:         1,
+                        }}>
+                          {conv.lastMessageBody ?? 'Xabar yo\'q'}
+                        </span>
+                        {hasUnread && (
+                          <div style={{
+                            background:   token.colorPrimary,
+                            color:        '#fff',
+                            borderRadius: 20,
+                            minWidth:     18,
+                            height:       18,
+                            display:      'flex',
+                            alignItems:   'center',
+                            justifyContent: 'center',
+                            fontSize:     11,
+                            fontWeight:   700,
+                            padding:      '0 5px',
+                            marginLeft:   6,
+                            flexShrink:   0,
+                          }}>
+                            {conv.unreadCount}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                })()}
               </div>
             )
           })
@@ -608,16 +652,36 @@ export default function SuhbatlarPage() {
 
                       {/* Bubble */}
                       <div style={{ maxWidth: isMobile ? '82%' : '65%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
-                        {/* Sender name - only for first in group (others) */}
+                        {/* Sender name — Role | Name formatida */}
                         {!isMine && !isNext && (
                           <span style={{
                             fontSize:     11,
                             fontWeight:   600,
-                            color:        token.colorPrimary,
                             marginBottom: 2,
                             marginLeft:   14,
+                            display:      'flex',
+                            alignItems:   'center',
+                            gap:          5,
                           }}>
-                            {msg.senderName}
+                            {roleLabel(msg.senderRole) && (
+                              <span style={{
+                                color:        '#fff',
+                                background:   msg.senderRole === 'SuperAdmin' ? '#722ed1'
+                                            : msg.senderRole === 'Admin'      ? '#1677ff'
+                                            : msg.senderRole === 'Manager'    ? '#fa8c16'
+                                            : '#52c41a',
+                                borderRadius: 4,
+                                padding:      '0px 5px',
+                                fontSize:     10,
+                                fontWeight:   700,
+                                lineHeight:   '16px',
+                              }}>
+                                {roleLabel(msg.senderRole)}
+                              </span>
+                            )}
+                            <span style={{ color: token.colorPrimary }}>
+                              {msg.senderName}
+                            </span>
                           </span>
                         )}
 

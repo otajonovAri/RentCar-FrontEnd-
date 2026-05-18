@@ -22,7 +22,8 @@ export interface MessageDto {
   conversationId:  number
   senderId:        number
   senderName:      string
-  senderAvatarUrl: string | null        // Xabar yuboruvchi avatar
+  senderAvatarUrl: string | null
+  senderRole:      string               // 'Admin' | 'SuperAdmin' | 'Manager' | 'Customer' | 'Owner'
   body:            string
   status:          string
   sentAt:          string
