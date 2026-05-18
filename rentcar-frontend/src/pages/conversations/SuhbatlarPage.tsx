@@ -652,36 +652,18 @@ export default function SuhbatlarPage() {
 
                       {/* Bubble */}
                       <div style={{ maxWidth: isMobile ? '82%' : '65%', display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
-                        {/* Sender name — Role | Name formatida */}
+                        {/* Sender: "Super Admin | Ism" yoki faqat "Ism" */}
                         {!isMine && !isNext && (
                           <span style={{
                             fontSize:     11,
                             fontWeight:   600,
+                            color:        token.colorPrimary,
                             marginBottom: 2,
                             marginLeft:   14,
-                            display:      'flex',
-                            alignItems:   'center',
-                            gap:          5,
                           }}>
-                            {roleLabel(msg.senderRole) && (
-                              <span style={{
-                                color:        '#fff',
-                                background:   msg.senderRole === 'SuperAdmin' ? '#722ed1'
-                                            : msg.senderRole === 'Admin'      ? '#1677ff'
-                                            : msg.senderRole === 'Manager'    ? '#fa8c16'
-                                            : '#52c41a',
-                                borderRadius: 4,
-                                padding:      '0px 5px',
-                                fontSize:     10,
-                                fontWeight:   700,
-                                lineHeight:   '16px',
-                              }}>
-                                {roleLabel(msg.senderRole)}
-                              </span>
-                            )}
-                            <span style={{ color: token.colorPrimary }}>
-                              {msg.senderName}
-                            </span>
+                            {roleLabel(msg.senderRole)
+                              ? `${roleLabel(msg.senderRole)} | ${msg.senderName}`
+                              : msg.senderName}
                           </span>
                         )}
 
