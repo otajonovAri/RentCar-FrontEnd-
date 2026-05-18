@@ -46,7 +46,8 @@ export default function SuhbatlarPage() {
   const { token }            = theme.useToken()
   const screens              = Grid.useBreakpoint()
   const isMobile             = !screens.md
-  const { userId } = useAuthStore()
+  const { userId, role } = useAuthStore()
+  const isAdmin = role === 'Admin' || role === 'SuperAdmin' || role === 'Manager'
   const [conversations, setConversations] = useState<ConversationDto[]>([])
   const [loading, setLoading]             = useState(false)
   const [statusFilter, setStatusFilter]   = useState<ConversationStatus | 'all'>('all')
@@ -306,18 +307,26 @@ export default function SuhbatlarPage() {
                   }} />
                 )}
 
-                {/* Avatar */}
-                <Avatar
-                  size={46}
-                  style={{
-                    background: nameToGradient(conv.subject),
-                    fontWeight: 700,
-                    fontSize:   16,
-                    flexShrink: 0,
-                  }}
-                >
-                  {getInitials(conv.subject)}
-                </Avatar>
+                {/* Avatar — admin: client rasmi, client: gradient */}
+                {isAdmin && conv.createdByAvatarUrl ? (
+                  <Avatar
+                    size={46}
+                    src={conv.createdByAvatarUrl}
+                    style={{ flexShrink: 0 }}
+                  />
+                ) : (
+                  <Avatar
+                    size={46}
+                    style={{
+                      background: nameToGradient(conv.createdByName),
+                      fontWeight: 700,
+                      fontSize:   16,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {getInitials(conv.createdByName)}
+                  </Avatar>
+                )}
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -450,17 +459,25 @@ export default function SuhbatlarPage() {
               />
             )}
 
-            <Avatar
-              size={38}
-              style={{
-                background: nameToGradient(activeConv?.subject ?? '?'),
-                fontWeight: 700,
-                fontSize:   14,
-                flexShrink: 0,
-              }}
-            >
-              {getInitials(activeConv?.subject ?? '?')}
-            </Avatar>
+            {isAdmin && activeConv?.createdByAvatarUrl ? (
+              <Avatar
+                size={38}
+                src={activeConv.createdByAvatarUrl}
+                style={{ flexShrink: 0 }}
+              />
+            ) : (
+              <Avatar
+                size={38}
+                style={{
+                  background: nameToGradient(activeConv?.createdByName ?? '?'),
+                  fontWeight: 700,
+                  fontSize:   14,
+                  flexShrink: 0,
+                }}
+              >
+                {getInitials(activeConv?.createdByName ?? '?')}
+              </Avatar>
+            )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
@@ -569,19 +586,23 @@ export default function SuhbatlarPage() {
                         marginBottom:  isLast ? 6 : 2,
                       }}
                     >
-                      {/* Avatar - only show for last message in group */}
+                      {/* Avatar — faqat guruh oxirgi xabari uchun */}
                       <div style={{ width: 28, flexShrink: 0 }}>
                         {!isMine && isLast && (
-                          <Avatar
-                            size={28}
-                            style={{
-                              background: nameToGradient(msg.senderName),
-                              fontWeight: 700,
-                              fontSize:   11,
-                            }}
-                          >
-                            {getInitials(msg.senderName)}
-                          </Avatar>
+                          msg.senderAvatarUrl ? (
+                            <Avatar size={28} src={msg.senderAvatarUrl} />
+                          ) : (
+                            <Avatar
+                              size={28}
+                              style={{
+                                background: nameToGradient(msg.senderName),
+                                fontWeight: 700,
+                                fontSize:   11,
+                              }}
+                            >
+                              {getInitials(msg.senderName)}
+                            </Avatar>
+                          )
                         )}
                       </div>
 

@@ -9,6 +9,7 @@ import { carsApi } from '@/api/carsApi'
 import { promotionsApi } from '@/api/promotionsApi'
 import { useRentalAddons } from '@/hooks/useLookups'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useThemeStore } from '@/store/themeStore'
 import type { BranchDto } from '@/types/branches'
 import type { DriverListItemDto } from '@/types/drivers'
 import type { CarListItemDto } from '@/types/cars'
@@ -29,6 +30,7 @@ interface Props {
 
 export default function RentalFormModal({ open, onClose, onSuccess, prefilledCarId, carLabel }: Props) {
   const isMobile = useIsMobile()
+  const isDark   = useThemeStore((s) => s.isDark)
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [branches, setBranches] = useState<BranchDto[]>([])
@@ -175,7 +177,11 @@ export default function RentalFormModal({ open, onClose, onSuccess, prefilledCar
         </Form.Item>
 
         {prefilledCarId && (
-          <div style={{ marginBottom: 16, padding: '8px 12px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+          <div style={{
+            marginBottom: 16, padding: '8px 12px', borderRadius: 6,
+            background: isDark ? '#162312' : '#f6ffed',
+            border: `1px solid ${isDark ? '#274916' : '#b7eb8f'}`,
+          }}>
             <Text style={{ color: '#52c41a', fontWeight: 500 }}>
               ✅ Tanlangan mashina: <strong>{carLabel ?? `ID: ${prefilledCarId}`}</strong>
             </Text>
@@ -185,8 +191,8 @@ export default function RentalFormModal({ open, onClose, onSuccess, prefilledCar
         {/* ── Sana tanlash: mobil → 2 alohida picker, desktop → RangePicker ── */}
         {isMobile ? (
           <div style={{
-            background:   '#f6f8ff',
-            border:       '1px solid #d0e4ff',
+            background:   isDark ? '#111a2c' : '#f6f8ff',
+            border:       `1px solid ${isDark ? '#1d3461' : '#d0e4ff'}`,
             borderRadius: 12,
             padding:      '12px 14px',
             marginBottom: 16,
