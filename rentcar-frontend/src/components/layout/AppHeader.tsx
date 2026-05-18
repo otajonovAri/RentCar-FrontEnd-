@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   Layout, Button, Avatar, Dropdown, Typography, Space,
-  Tooltip, theme, Grid, Badge, Popover, Tabs, Empty, Spin,
+  Tooltip, theme, Grid, Badge, Popover, Drawer, Tabs, Empty, Spin,
 } from 'antd'
 import {
   MenuFoldOutlined, MenuUnfoldOutlined,
@@ -53,23 +53,24 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
   const { isDark, toggle } = useThemeStore()
   const { token } = theme.useToken()
   const screens = Grid.useBreakpoint()
+  const isMobile = !screens.sm
 
   const isClient = role === 'Customer' || role === 'Owner'
 
-  // ── Counts ────────────────────────────────────────────────────────────────
+  // ── Counts ─────────────────────────────────────────────────────────────────
   const [unreadMsgs,  setUnreadMsgs]  = useState(0)
   const [unreadNotif, setUnreadNotif] = useState(0)
   const totalUnread = unreadMsgs + unreadNotif
 
-  // ── Popover data ──────────────────────────────────────────────────────────
-  const [popOpen,    setPopOpen]    = useState(false)
-  const [activeTab,  setActiveTab]  = useState('chat')
-  const [convs,      setConvs]      = useState<ConversationDto[]>([])
-  const [notifs,     setNotifs]     = useState<NotificationDto[]>([])
-  const [loadingC,   setLoadingC]   = useState(false)
-  const [loadingN,   setLoadingN]   = useState(false)
+  // ── Panel state ─────────────────────────────────────────────────────────────
+  const [popOpen,   setPopOpen]   = useState(false)
+  const [activeTab, setActiveTab] = useState('chat')
+  const [convs,     setConvs]     = useState<ConversationDto[]>([])
+  const [notifs,    setNotifs]    = useState<NotificationDto[]>([])
+  const [loadingC,  setLoadingC]  = useState(false)
+  const [loadingN,  setLoadingN]  = useState(false)
 
-  // ── Background polling ────────────────────────────────────────────────────
+  // ── Background polling ──────────────────────────────────────────────────────
   const loadCounts = useCallback(() => {
     if (!userId) return
     conversationsApi.getUnreadCount(userId)
@@ -84,8 +85,8 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
     return () => clearInterval(t)
   }, [loadCounts])
 
-  // ── Load popover data ─────────────────────────────────────────────────────
-  const loadPopData = useCallback(async () => {
+  // ── Load panel data ─────────────────────────────────────────────────────────
+  const loadPanelData = useCallback(async () => {
     if (!userId) return
     setLoadingC(true)
     setLoadingN(true)
@@ -97,12 +98,17 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
       .finally(() => setLoadingN(false))
   }, [userId])
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpen = () => {
+    setPopOpen(true)
+    loadPanelData()
+  }
+  const handleClose = () => setPopOpen(false)
+  const handlePopoverChange = (open: boolean) => {
     setPopOpen(open)
-    if (open) loadPopData()
+    if (open) loadPanelData()
   }
 
-  // ── Logout ────────────────────────────────────────────────────────────────
+  // ── Logout ──────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     try { await authApi.logout() } catch { /* ignore */ }
     finally { logout(); navigate('/login', { replace: true }) }
@@ -117,176 +123,184 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
     { key: 'logout', icon: <LogoutOutlined />, label: 'Chiqish', danger: true, onClick: handleLogout },
   ]
 
-  // ── Popover content ───────────────────────────────────────────────────────
-  const popWidth = screens.sm ? 320 : Math.min(window.innerWidth - 24, 320)
-  const popContent = (
-    <div style={{ width: popWidth }}>
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        size="small"
-        items={[
-          {
-            key: 'chat',
-            label: (
-              <span>
-                <MessageOutlined style={{ marginRight: 4 }} />
-                Chat
-                {unreadMsgs > 0 && (
-                  <Badge count={unreadMsgs} size="small" style={{ marginLeft: 6 }} />
-                )}
-              </span>
-            ),
-            children: (
-              <div>
-                {loadingC ? (
-                  <div style={{ textAlign: 'center', padding: 24 }}><Spin /></div>
-                ) : convs.length === 0 ? (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Suhbat yo'q" style={{ margin: '16px 0' }} />
-                ) : (
-                  convs.map(c => {
-                    const hasUnread = c.unreadCount > 0
-                    const timeStr = isToday(new Date(c.lastMessageAt ?? c.createdAt))
-                      ? format(new Date(c.lastMessageAt ?? c.createdAt), 'HH:mm')
-                      : format(new Date(c.lastMessageAt ?? c.createdAt), 'dd.MM')
+  // ── Shared panel content ────────────────────────────────────────────────────
+  const panelContent = (
+    <Tabs
+      activeKey={activeTab}
+      onChange={setActiveTab}
+      size="small"
+      style={{ width: '100%' }}
+      items={[
+        {
+          key: 'chat',
+          label: (
+            <span>
+              <MessageOutlined style={{ marginRight: 4 }} />
+              Chat
+              {unreadMsgs > 0 && (
+                <Badge count={unreadMsgs} size="small" style={{ marginLeft: 6 }} />
+              )}
+            </span>
+          ),
+          children: (
+            <div>
+              {loadingC ? (
+                <div style={{ textAlign: 'center', padding: 24 }}><Spin /></div>
+              ) : convs.length === 0 ? (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Suhbat yo'q" style={{ margin: '16px 0' }} />
+              ) : (
+                convs.map(c => {
+                  const hasUnread = c.unreadCount > 0
+                  const timeStr = isToday(new Date(c.lastMessageAt ?? c.createdAt))
+                    ? format(new Date(c.lastMessageAt ?? c.createdAt), 'HH:mm')
+                    : format(new Date(c.lastMessageAt ?? c.createdAt), 'dd.MM')
 
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => { setPopOpen(false); navigate('/conversations') }}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '8px 4px', cursor: 'pointer', borderRadius: 8,
-                          borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                        }}
-                      >
-                        <div style={{
-                          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                          background: 'linear-gradient(135deg,#1677ff,#6366f1)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 13, fontWeight: 700, color: '#fff',
-                        }}>
-                          {isClient ? 'SC' : (c.createdByName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase())}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: 13, fontWeight: hasUnread ? 700 : 500,
-                            color: token.colorText,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
-                            {isClient ? 'Support Chat' : c.subject}
-                          </div>
-                          <div style={{
-                            fontSize: 11, color: token.colorTextTertiary,
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
-                            {c.lastMessageBody ?? 'Xabar yo\'q'}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-                          <span style={{ fontSize: 10, color: token.colorTextTertiary }}>{timeStr}</span>
-                          {hasUnread && (
-                            <Badge count={c.unreadCount} size="small" />
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })
-                )}
-                <div
-                  onClick={() => { setPopOpen(false); navigate('/conversations') }}
-                  style={{
-                    textAlign: 'center', padding: '8px 0 2px', cursor: 'pointer',
-                    fontSize: 12, color: token.colorPrimary, fontWeight: 600,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  }}
-                >
-                  Barchasini ko'rish <RightOutlined style={{ fontSize: 10 }} />
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: 'notif',
-            label: (
-              <span>
-                <BellOutlined style={{ marginRight: 4 }} />
-                Bildirishnomalar
-                {unreadNotif > 0 && (
-                  <Badge count={unreadNotif} size="small" style={{ marginLeft: 6 }} />
-                )}
-              </span>
-            ),
-            children: (
-              <div>
-                {loadingN ? (
-                  <div style={{ textAlign: 'center', padding: 24 }}><Spin /></div>
-                ) : notifs.length === 0 ? (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Bildirishnoma yo'q" style={{ margin: '16px 0' }} />
-                ) : (
-                  notifs.map(n => (
+                  return (
                     <div
-                      key={n.id}
-                      onClick={() => { setPopOpen(false); navigate('/notifications') }}
+                      key={c.id}
+                      onClick={() => { handleClose(); navigate('/conversations') }}
                       style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 10,
+                        display: 'flex', alignItems: 'center', gap: 10,
                         padding: '8px 4px', cursor: 'pointer', borderRadius: 8,
                         borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                        background: n.isRead ? 'transparent' : `${token.colorPrimary}08`,
                       }}
                     >
                       <div style={{
-                        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                        background: token.colorFillSecondary,
+                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                        background: 'linear-gradient(135deg,#1677ff,#6366f1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 14,
+                        fontSize: 13, fontWeight: 700, color: '#fff',
                       }}>
-                        {notifIcon(n.type)}
+                        {isClient ? 'SC' : (c.createdByName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase())}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
-                          fontSize: 12, fontWeight: n.isRead ? 500 : 700,
+                          fontSize: 13, fontWeight: hasUnread ? 700 : 500,
                           color: token.colorText,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>
-                          {n.title}
+                          {isClient ? 'Support Chat' : c.subject}
                         </div>
                         <div style={{
-                          fontSize: 11, color: token.colorTextSecondary, marginTop: 1,
-                          display: '-webkit-box', WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                          fontSize: 11, color: token.colorTextTertiary,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>
-                          {n.body}
-                        </div>
-                        <div style={{ fontSize: 10, color: token.colorTextTertiary, marginTop: 2 }}>
-                          {format(new Date(n.createdAt), 'dd.MM.yyyy HH:mm')}
+                          {c.lastMessageBody ?? "Xabar yo'q"}
                         </div>
                       </div>
-                      {!n.isRead && (
-                        <div style={{
-                          width: 7, height: 7, borderRadius: '50%',
-                          background: token.colorPrimary, flexShrink: 0, marginTop: 4,
-                        }} />
-                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+                        <span style={{ fontSize: 10, color: token.colorTextTertiary }}>{timeStr}</span>
+                        {hasUnread && <Badge count={c.unreadCount} size="small" />}
+                      </div>
                     </div>
-                  ))
-                )}
-                <div
-                  onClick={() => { setPopOpen(false); navigate('/notifications') }}
-                  style={{
-                    textAlign: 'center', padding: '8px 0 2px', cursor: 'pointer',
-                    fontSize: 12, color: token.colorPrimary, fontWeight: 600,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  }}
-                >
-                  Barchasini ko'rish <RightOutlined style={{ fontSize: 10 }} />
-                </div>
+                  )
+                })
+              )}
+              <div
+                onClick={() => { handleClose(); navigate('/conversations') }}
+                style={{
+                  textAlign: 'center', padding: '10px 0 2px', cursor: 'pointer',
+                  fontSize: 12, color: token.colorPrimary, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                }}
+              >
+                Barchasini ko'rish <RightOutlined style={{ fontSize: 10 }} />
               </div>
-            ),
-          },
-        ]}
+            </div>
+          ),
+        },
+        {
+          key: 'notif',
+          label: (
+            <span>
+              <BellOutlined style={{ marginRight: 4 }} />
+              Bildirishnomalar
+              {unreadNotif > 0 && (
+                <Badge count={unreadNotif} size="small" style={{ marginLeft: 6 }} />
+              )}
+            </span>
+          ),
+          children: (
+            <div>
+              {loadingN ? (
+                <div style={{ textAlign: 'center', padding: 24 }}><Spin /></div>
+              ) : notifs.length === 0 ? (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Bildirishnoma yo'q" style={{ margin: '16px 0' }} />
+              ) : (
+                notifs.map(n => (
+                  <div
+                    key={n.id}
+                    onClick={() => { handleClose(); navigate('/notifications') }}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      padding: '8px 4px', cursor: 'pointer', borderRadius: 8,
+                      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                      background: n.isRead ? 'transparent' : `${token.colorPrimary}08`,
+                    }}
+                  >
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                      background: token.colorFillSecondary,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 14,
+                    }}>
+                      {notifIcon(n.type)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 12, fontWeight: n.isRead ? 500 : 700,
+                        color: token.colorText,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {n.title}
+                      </div>
+                      <div style={{
+                        fontSize: 11, color: token.colorTextSecondary, marginTop: 1,
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}>
+                        {n.body}
+                      </div>
+                      <div style={{ fontSize: 10, color: token.colorTextTertiary, marginTop: 2 }}>
+                        {format(new Date(n.createdAt), 'dd.MM.yyyy HH:mm')}
+                      </div>
+                    </div>
+                    {!n.isRead && (
+                      <div style={{
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: token.colorPrimary, flexShrink: 0, marginTop: 4,
+                      }} />
+                    )}
+                  </div>
+                ))
+              )}
+              <div
+                onClick={() => { handleClose(); navigate('/notifications') }}
+                style={{
+                  textAlign: 'center', padding: '10px 0 2px', cursor: 'pointer',
+                  fontSize: 12, color: token.colorPrimary, fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                }}
+              >
+                Barchasini ko'rish <RightOutlined style={{ fontSize: 10 }} />
+              </div>
+            </div>
+          ),
+        },
+      ]}
+    />
+  )
+
+  // ── Bell trigger ────────────────────────────────────────────────────────────
+  const bellButton = (
+    <Badge count={totalUnread} size="small" offset={[-4, 4]}>
+      <Button
+        type="text" shape="circle"
+        icon={<BellOutlined style={{ fontSize: 18 }} />}
+        style={{ width: 40, height: 40 }}
+        onClick={isMobile ? handleOpen : undefined}
       />
-    </div>
+    </Badge>
   )
 
   return (
@@ -317,30 +331,46 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
           />
         </Tooltip>
 
-        {/* 🔔 Bell — Chat + Bildirishnomalar */}
-        <Popover
-          content={popContent}
-          trigger="click"
-          placement="bottomRight"
-          open={popOpen}
-          onOpenChange={handleOpenChange}
-          arrow={false}
-          overlayStyle={{ paddingTop: 8, maxWidth: '96vw' }}
-          overlayInnerStyle={{
-            padding: screens.sm ? '8px 12px' : '8px 8px',
-            minWidth: screens.sm ? 340 : undefined,
-            width: screens.sm ? undefined : 'calc(100vw - 16px)',
-            maxWidth: 360,
-          }}
-        >
-          <Badge count={totalUnread} size="small" offset={[-4, 4]}>
-            <Button
-              type="text" shape="circle"
-              icon={<BellOutlined style={{ fontSize: 18 }} />}
-              style={{ width: 40, height: 40 }}
-            />
-          </Badge>
-        </Popover>
+        {/* 🔔 Desktop → Popover | Mobile → Drawer */}
+        {isMobile ? (
+          <>
+            {bellButton}
+            <Drawer
+              open={popOpen}
+              onClose={handleClose}
+              placement="bottom"
+              height="auto"
+              styles={{
+                header: { padding: '12px 16px 10px', borderBottom: `1px solid ${token.colorBorderSecondary}` },
+                body:   { padding: '0 16px 20px' },
+              }}
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <BellOutlined style={{ color: token.colorPrimary }} />
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>Xabarnomalar</span>
+                  {totalUnread > 0 && (
+                    <Badge count={totalUnread} size="small" />
+                  )}
+                </div>
+              }
+            >
+              {panelContent}
+            </Drawer>
+          </>
+        ) : (
+          <Popover
+            content={<div style={{ width: 320 }}>{panelContent}</div>}
+            trigger="click"
+            placement="bottomRight"
+            open={popOpen}
+            onOpenChange={handlePopoverChange}
+            arrow={false}
+            overlayStyle={{ paddingTop: 8 }}
+            overlayInnerStyle={{ padding: '8px 12px', minWidth: 340, maxWidth: 360 }}
+          >
+            {bellButton}
+          </Popover>
+        )}
 
         {/* User dropdown */}
         <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow>
