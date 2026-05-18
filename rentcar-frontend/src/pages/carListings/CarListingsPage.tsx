@@ -8,6 +8,7 @@ import {
   CarFilled, ClockCircleFilled, CheckCircleFilled,
   CloseCircleFilled, DollarCircleFilled, UserOutlined,
   CalendarOutlined, TagOutlined, PercentageOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import api from '@/api/axiosInstance'
 import { carListingsApi } from '@/api/carListingsApi'
@@ -715,7 +716,9 @@ function ListingCard({
             <span style={{ fontSize: 12, color: token.colorTextTertiary, display: 'flex', alignItems: 'center', gap: 4 }}>
               <DollarCircleFilled/> {item.status === 'Approved' ? "So'ralgan" : 'Narx'}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: item.status === 'Approved' ? token.colorTextSecondary : '#fa8c16',
+            <span style={{
+              fontWeight: 800,
+              color: item.status === 'Approved' ? token.colorTextSecondary : '#fa8c16',
               textDecoration: item.status === 'Approved' && item.approvedDailyRate ? 'line-through' : 'none',
               fontSize: item.status === 'Approved' && item.approvedDailyRate ? 11 : 13,
             }}>
