@@ -142,9 +142,20 @@ export default function RegisterPage() {
         </Text>
 
         {serverError && (
-          <Alert message={serverError} type="error" showIcon closable
+          <Alert
+            showIcon closable
             onClose={() => setServerError(null)}
-            style={{ marginBottom: 16, borderRadius: 8 }} />
+            style={{ marginBottom: 16, borderRadius: 8 }}
+            type="error"
+            message={serverError}
+            description={
+              serverError.includes('allaqachon ro\'yxatdan o\'tgan') ? (
+                <span>
+                  <Link to="/login" style={{ fontWeight: 600 }}>Kirish sahifasiga o'tish →</Link>
+                </span>
+              ) : null
+            }
+          />
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
