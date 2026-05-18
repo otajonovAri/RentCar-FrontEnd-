@@ -6,6 +6,7 @@ export interface AuthResponseDto {
   accessToken: string
   refreshToken: string
   accessTokenExpiry: string
+  avatarUrl: string | null
 }
 
 /** Returned by GET /api/auth/me — same shape as users/UserDto */
@@ -18,6 +19,7 @@ export interface UserDto {
   dateOfBirth:    string | null
   address:        string | null
   licenseNumber:  string | null
+  avatarUrl:      string | null
   emailConfirmed: boolean
   lastActive:     string | null
   createdAt:      string

@@ -79,6 +79,7 @@ api.interceptors.response.use(
           fullName:     data.fullName,
           email:        data.email,
           role:         data.role,
+          avatarUrl:    data.avatarUrl ?? null,
         })
       } catch {
         // non-critical: tokens already persisted to localStorage above

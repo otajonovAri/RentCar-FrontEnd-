@@ -9,6 +9,7 @@ interface AuthState {
   fullName:     string | null
   email:        string | null
   role:         UserRole | null
+  avatarUrl:    string | null
   isAuthenticated: boolean
 
   setAuth: (payload: {
@@ -18,10 +19,14 @@ interface AuthState {
     fullName:     string
     email:        string
     role:         UserRole
+    avatarUrl?:   string | null
   }) => void
 
   /** Only update tokens (used by silent refresh in axiosInstance) */
   updateTokens: (accessToken: string, refreshToken: string) => void
+
+  /** Update avatar after profile upload */
+  updateAvatar: (avatarUrl: string | null) => void
 
   logout: () => void
   hasRole: (roles: UserRole[]) => boolean
@@ -36,12 +41,22 @@ export const useAuthStore = create<AuthState>()(
       fullName:        null,
       email:           null,
       role:            null,
+      avatarUrl:       null,
       isAuthenticated: false,
 
       setAuth: (payload) => {
         localStorage.setItem('accessToken',  payload.accessToken)
         localStorage.setItem('refreshToken', payload.refreshToken)
-        set({ ...payload, isAuthenticated: true })
+        set({
+          accessToken:     payload.accessToken,
+          refreshToken:    payload.refreshToken,
+          userId:          payload.userId,
+          fullName:        payload.fullName,
+          email:           payload.email,
+          role:            payload.role,
+          avatarUrl:       payload.avatarUrl ?? null,
+          isAuthenticated: true,
+        })
       },
 
       updateTokens: (accessToken, refreshToken) => {
@@ -50,16 +65,18 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken, refreshToken })
       },
 
+      updateAvatar: (avatarUrl) => {
+        set({ avatarUrl })
+      },
+
       logout: () => {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
 
-        // Clear axios default Authorization header
         try {
-          // Import lazily to avoid circular dep at module init time
           import('@/api/axiosInstance').then(({ default: api }) => {
             delete api.defaults.headers.common['Authorization']
-          }).catch(() => {/* non-critical */})
+          }).catch(() => {})
         } catch {/* non-critical */}
 
         set({
@@ -69,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
           fullName:        null,
           email:           null,
           role:            null,
+          avatarUrl:       null,
           isAuthenticated: false,
         })
       },
@@ -87,6 +105,7 @@ export const useAuthStore = create<AuthState>()(
         fullName:        state.fullName,
         email:           state.email,
         role:            state.role,
+        avatarUrl:       state.avatarUrl,
         isAuthenticated: state.isAuthenticated,
       }),
     },

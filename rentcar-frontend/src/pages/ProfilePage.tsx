@@ -39,7 +39,7 @@ const GRADIENT_BY_ROLE: Record<string, string> = {
 }
 
 export default function ProfilePage() {
-  const { userId, fullName, email, role, setAuth, accessToken, refreshToken } = useAuthStore()
+  const { userId, fullName, email, role, setAuth, updateAvatar, accessToken, refreshToken } = useAuthStore()
   const { token: themeToken } = theme.useToken()
   const [form] = Form.useForm()
   const [licenseForm] = Form.useForm()
@@ -95,6 +95,7 @@ export default function ProfilePage() {
         dateOfBirth: profile?.dateOfBirth ?? dayjs().subtract(18, 'year').format('YYYY-MM-DD'),
         avatarUrl:   result.url,
       })
+      updateAvatar(result.url)
       await loadProfile()
       message.success('Profil rasmi yangilandi!')
       done?.('ok')
@@ -128,7 +129,7 @@ export default function ProfilePage() {
       try {
         const meRes = await authApi.me()
         if (accessToken && refreshToken) {
-          setAuth({ accessToken, refreshToken, userId: meRes.data.id, fullName: meRes.data.fullName, email: meRes.data.email, role: meRes.data.role })
+          setAuth({ accessToken, refreshToken, userId: meRes.data.id, fullName: meRes.data.fullName, email: meRes.data.email, role: meRes.data.role, avatarUrl: meRes.data.avatarUrl ?? null })
         }
       } catch { /* non-critical */ }
       message.success('Profil muvaffaqiyatli yangilandi')

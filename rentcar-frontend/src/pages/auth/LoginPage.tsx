@@ -41,6 +41,7 @@ export default function LoginPage() {
       fullName:     data.fullName,
       email:        data.email,
       role:         data.role,
+      avatarUrl:    data.avatarUrl ?? null,
     })
     navigate(
       data.role === 'Customer' || data.role === 'Owner' ? '/my-rentals' : '/dashboard',

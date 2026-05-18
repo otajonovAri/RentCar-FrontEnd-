@@ -49,7 +49,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
   const navigate = useNavigate()
-  const { fullName, role, logout, userId } = useAuthStore()
+  const { fullName, role, logout, userId, avatarUrl } = useAuthStore()
   const { isDark, toggle } = useThemeStore()
   const { token } = theme.useToken()
   const screens = Grid.useBreakpoint()
@@ -377,12 +377,13 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
           <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
             <Avatar
               size={34}
+              src={avatarUrl ?? undefined}
               style={{
                 background: 'linear-gradient(135deg, #1677ff 0%, #6366f1 100%)',
                 fontWeight: 700, fontSize: 14, flexShrink: 0,
               }}
             >
-              {initials}
+              {!avatarUrl && initials}
             </Avatar>
             <div style={{ display: screens?.sm ? 'flex' : 'none', flexDirection: 'column', lineHeight: 1.3 }}>
               <Text strong style={{ fontSize: 13 }}>{fullName}</Text>

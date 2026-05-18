@@ -30,12 +30,13 @@ export default function ConfirmEmailPage() {
       .confirmEmail({ email, token })
       .then(({ data }) => {
         setAuth({
-          accessToken: data.accessToken,
+          accessToken:  data.accessToken,
           refreshToken: data.refreshToken,
-          userId: data.userId,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role,
+          userId:       data.userId,
+          fullName:     data.fullName,
+          email:        data.email,
+          role:         data.role,
+          avatarUrl:    data.avatarUrl ?? null,
         })
         setRedirectRole(data.role)
         setStatus('success')
