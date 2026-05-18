@@ -54,6 +54,11 @@ export interface RefreshTokenDto {
   refreshToken: string
 }
 
+export interface RegisterPendingDto {
+  email: string
+  message: string
+}
+
 export interface ApiError {
   status: number
   title: string

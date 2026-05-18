@@ -7,11 +7,18 @@ import type {
   ConfirmEmailDto,
   ResendConfirmationDto,
   RefreshTokenDto,
+  RegisterPendingDto,
 } from '@/types/auth'
 
 export const authApi = {
   register: (data: RegisterDto) =>
-    api.post<AuthResponseDto>('/api/auth/register', data),
+    api.post<RegisterPendingDto>('/api/auth/register', data),
+
+  verifyEmail: (data: ConfirmEmailDto) =>
+    api.post<AuthResponseDto>('/api/auth/confirm-email', data),
+
+  resendOtp: (data: ResendConfirmationDto) =>
+    api.post<void>('/api/auth/resend-confirmation', data),
 
   confirmEmail: (data: ConfirmEmailDto) =>
     api.post<AuthResponseDto>('/api/auth/confirm-email', data),

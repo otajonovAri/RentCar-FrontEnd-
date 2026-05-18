@@ -9,7 +9,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Dayjs } from 'dayjs'
 import { authApi } from '@/api/authApi'
-import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import type { ApiError } from '@/types/auth'
 import { AxiosError } from 'axios'
@@ -35,7 +34,6 @@ type RegisterForm = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const navigate   = useNavigate()
-  const setAuth    = useAuthStore((s) => s.setAuth)
   const isDark     = useThemeStore((s) => s.isDark)
 
   const [serverError, setServerError] = useState<string | null>(null)
@@ -63,18 +61,9 @@ export default function RegisterPage() {
         password:    v.password,
       })
 
-      // Avtomatik login — to'g'ridan-to'g'ri dashboard/my-rentals ga
-      setAuth({
-        accessToken:  data.accessToken,
-        refreshToken: data.refreshToken,
-        userId:       data.userId,
-        fullName:     data.fullName,
-        email:        data.email,
-        role:         data.role,
-      })
-
+      // OTP tasdiqlash sahifasiga yo'naltirish
       navigate(
-        data.role === 'Customer' || data.role === 'Owner' ? '/my-rentals' : '/dashboard',
+        `/verify-email?email=${encodeURIComponent(data.email)}`,
         { replace: true },
       )
     } catch (err) {
