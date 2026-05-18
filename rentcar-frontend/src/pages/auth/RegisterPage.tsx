@@ -79,10 +79,9 @@ export default function RegisterPage() {
         )
       } else {
         // OTP tasdiqlash sahifasiga yo'naltirish
-        navigate(
-          `/verify-email?email=${encodeURIComponent(data.email)}`,
-          { replace: true },
-        )
+        const params = new URLSearchParams({ email: data.email })
+        if (data.botUsername) params.set('bot', data.botUsername)
+        navigate(`/verify-email?${params.toString()}`, { replace: true })
       }
     } catch (err) {
       const e = err as AxiosError<ApiError>

@@ -58,6 +58,7 @@ export interface RegisterPendingDto {
   email: string
   message: string
   emailVerificationRequired: boolean
+  botUsername?:  string   // Telegram bot username (@ belgisisiz)
   // Email service ishlamagan holda avtomatik login:
   userId?:       number
   fullName?:     string
