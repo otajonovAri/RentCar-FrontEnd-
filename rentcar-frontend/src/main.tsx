@@ -41,6 +41,11 @@ function Root() {
   )
 }
 
+// Yangi deploy dan keyin eski chunk topilmasa — sahifani avtomatik yangilaydi
+window.addEventListener('vite:preloadError', () => {
+  window.location.reload()
+})
+
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
 
 createRoot(document.getElementById('root')!).render(
