@@ -275,26 +275,30 @@ function CustomerSider({ collapsed }: { collapsed: boolean }) {
 export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const role = useAuthStore((s) => s.role)
+  const { role, logout } = useAuthStore()
 
   const isCustomer = role === 'Customer' || role === 'Owner'
 
-  // Customer gets the custom card-style sidebar
-  if (isCustomer) {
-    return <CustomerSider collapsed={collapsed} />
-  }
+  if (isCustomer) return <CustomerSider collapsed={collapsed} />
 
-  // Admin/Manager gets the standard Ant Design Menu sidebar
   const visibleItems = menuItems.filter(
     item => !item.roles || (role && item.roles.includes(role as UserRole))
   )
+
+  const handleLogout = async () => {
+    try { await authApi.logout() } catch { /* ignore */ }
+    finally { logout(); navigate('/login', { replace: true }) }
+  }
 
   return (
     <Sider
       trigger={null}
       collapsible
       collapsed={collapsed}
-      style={{ overflow: 'auto', height: '100vh', flexShrink: 0 }}
+      style={{
+        height: '100vh', flexShrink: 0,
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }}
       width={220}
     >
       {/* Logo */}
@@ -311,18 +315,54 @@ export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
         )}
       </div>
 
-      <Menu
-        theme="dark"
-        mode="inline"
-        selectedKeys={[location.pathname]}
-        style={{ border: 'none', marginTop: 4 }}
-        items={visibleItems.map(item => ({
-          key:     item.key,
-          icon:    item.icon,
-          label:   item.label,
-          onClick: () => { navigate(item.key); onMenuClick?.() },
-        }))}
-      />
+      {/* Scrollable menu */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          style={{ border: 'none', marginTop: 4 }}
+          items={visibleItems.map(item => ({
+            key:     item.key,
+            icon:    item.icon,
+            label:   item.label,
+            onClick: () => { navigate(item.key); onMenuClick?.() },
+          }))}
+        />
+      </div>
+
+      {/* Logout — pastda qotib turadi */}
+      <div style={{
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        padding:   collapsed ? '10px 6px' : '10px 12px',
+        flexShrink: 0,
+      }}>
+        <button
+          onClick={handleLogout}
+          title={collapsed ? 'Chiqish' : undefined}
+          style={{
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap:            collapsed ? 0 : 10,
+            width:          '100%',
+            padding:        '10px 12px',
+            borderRadius:   8,
+            border:         '1px solid rgba(255,255,255,0.1)',
+            background:     'rgba(255,255,255,0.05)',
+            cursor:         'pointer',
+            color:          'rgba(255,255,255,0.8)',
+            fontSize:       13,
+            fontWeight:     600,
+            transition:     'background 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
+        >
+          <LogoutOutlined style={{ fontSize: 15 }} />
+          {!collapsed && 'Chiqish'}
+        </button>
+      </div>
     </Sider>
   )
 }
