@@ -295,73 +295,75 @@ export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      style={{
-        height: '100vh', flexShrink: 0,
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      }}
+      style={{ height: '100vh', flexShrink: 0, overflow: 'hidden' }}
       width={220}
     >
-      {/* Logo */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 20px', height: 56,
-        borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0,
-      }}>
-        <CarFilled style={{ fontSize: 20, color: '#1677ff', flexShrink: 0 }} />
-        {!collapsed && (
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, whiteSpace: 'nowrap' }}>
-            RentCar
-          </span>
-        )}
-      </div>
+      {/* Inner flex wrapper — Sider CSS'ini bypass qiladi */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-      {/* Scrollable menu */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          style={{ border: 'none', marginTop: 4 }}
-          items={visibleItems.map(item => ({
-            key:     item.key,
-            icon:    item.icon,
-            label:   item.label,
-            onClick: () => { navigate(item.key); onMenuClick?.() },
-          }))}
-        />
-      </div>
+        {/* Logo */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '0 20px', height: 56,
+          borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0,
+        }}>
+          <CarFilled style={{ fontSize: 20, color: '#1677ff', flexShrink: 0 }} />
+          {!collapsed && (
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, whiteSpace: 'nowrap' }}>
+              RentCar
+            </span>
+          )}
+        </div>
 
-      {/* Logout — pastda qotib turadi */}
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        padding:   collapsed ? '10px 6px' : '10px 12px',
-        flexShrink: 0,
-      }}>
-        <button
-          onClick={handleLogout}
-          title={collapsed ? 'Chiqish' : undefined}
-          style={{
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap:            collapsed ? 0 : 10,
-            width:          '100%',
-            padding:        '10px 12px',
-            borderRadius:   8,
-            border:         '1px solid rgba(255,255,255,0.1)',
-            background:     'rgba(255,255,255,0.05)',
-            cursor:         'pointer',
-            color:          'rgba(255,255,255,0.8)',
-            fontSize:       13,
-            fontWeight:     600,
-            transition:     'background 0.15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
-        >
-          <LogoutOutlined style={{ fontSize: 15 }} />
-          {!collapsed && 'Chiqish'}
-        </button>
+        {/* Scrollable menu */}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            style={{ border: 'none', marginTop: 4 }}
+            items={visibleItems.map(item => ({
+              key:     item.key,
+              icon:    item.icon,
+              label:   item.label,
+              onClick: () => { navigate(item.key); onMenuClick?.() },
+            }))}
+          />
+        </div>
+
+        {/* Logout — har doim pastda */}
+        <div style={{
+          borderTop:  '1px solid rgba(255,255,255,0.08)',
+          padding:    collapsed ? '10px 6px' : '10px 12px',
+          flexShrink: 0,
+        }}>
+          <button
+            onClick={handleLogout}
+            title={collapsed ? 'Chiqish' : undefined}
+            style={{
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap:            collapsed ? 0 : 10,
+              width:          '100%',
+              padding:        '10px 12px',
+              borderRadius:   8,
+              border:         '1px solid rgba(255,255,255,0.1)',
+              background:     'rgba(255,255,255,0.05)',
+              cursor:         'pointer',
+              color:          'rgba(255,255,255,0.8)',
+              fontSize:       13,
+              fontWeight:     600,
+              transition:     'background 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
+          >
+            <LogoutOutlined style={{ fontSize: 15 }} />
+            {!collapsed && 'Chiqish'}
+          </button>
+        </div>
+
       </div>
     </Sider>
   )
