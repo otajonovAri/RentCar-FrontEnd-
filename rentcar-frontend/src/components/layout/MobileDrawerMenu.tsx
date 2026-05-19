@@ -117,7 +117,6 @@ export default function MobileDrawerMenu({ onClose }: Props) {
 
   const bg     = isDark ? '#141414' : '#001529'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.08)'
-  const active = isDark ? 'rgba(22,119,255,0.35)' : 'rgba(22,119,255,0.4)'
 
   return (
     <div style={{
