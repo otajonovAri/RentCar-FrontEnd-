@@ -127,28 +127,12 @@ export default function MobileDrawerMenu({ onClose }: Props) {
       background:    bg,
       overflow:      'hidden',
     }}>
-      {/* ── Logo ── */}
-      <div style={{
-        display:      'flex',
-        alignItems:   'center',
-        gap:          10,
-        padding:      '0 20px',
-        height:       56,
-        borderBottom: `1px solid ${border}`,
-        flexShrink:   0,
-      }}>
-        <CarFilled style={{ fontSize: 22, color: '#1677ff' }} />
-        <span style={{ color: '#fff', fontWeight: 800, fontSize: 17, letterSpacing: 0.3 }}>
-          RentCar
-        </span>
-      </div>
-
       {/* ── User info ── */}
       <div style={{
         display:      'flex',
         alignItems:   'center',
         gap:          12,
-        padding:      '14px 20px',
+        padding:      '20px 20px 16px',
         borderBottom: `1px solid ${border}`,
         flexShrink:   0,
       }}>
