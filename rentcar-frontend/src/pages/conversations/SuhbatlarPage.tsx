@@ -165,9 +165,11 @@ export default function SuhbatlarPage() {
   }
 
   // ── Height ────────────────────────────────────────────────────────────────
+  // Mobile: 56px header + 12px top padding + 60px bottom nav + 12px bottom padding = 140px
+  // Desktop: 56px header + 24px top padding + 24px bottom padding = 104px
   const pageHeight = isMobile
-    ? 'calc(100dvh - 56px - 48px)'
-    : 'calc(100vh - 56px - 48px)'
+    ? 'calc(100dvh - 140px)'
+    : 'calc(100vh - 104px)'
 
   // Filtered conversations
   const filteredConvs = statusFilter === 'all'

@@ -98,7 +98,7 @@ export default function RentalsPage() {
   const cols       = isMobile ? 1 : !screens.lg ? 2 : 3
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div style={{ paddingBottom: isMobile ? 80 : 48 }}>
 
       {/* ── PENDING PAYMENTS (Admin only) ─────────────────────────────────── */}
       {isAdmin && pendingPayments.length > 0 && (
@@ -299,7 +299,12 @@ export default function RentalsPage() {
           </div>
 
           {/* Status filter chips */}
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          <div style={{
+            display:'flex', gap:8,
+            ...(isMobile
+              ? { overflowX:'auto', flexWrap:'nowrap', paddingBottom:4, scrollbarWidth:'none' }
+              : { flexWrap:'wrap' }),
+          }}>
             {STATUSES.map(s => {
               const cfg   = s === 'all' ? null : STATUS_CFG[s as RentalStatus]
               const active = s === 'all' ? !statusFilter : statusFilter === s
@@ -375,10 +380,166 @@ export default function RentalsPage() {
           </div>
 
           {/* Cards grid */}
-          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?14:20, marginBottom:24 }}>
+          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?12:20, marginBottom:24 }}>
             {items.map(rental => {
               const cfg   = STATUS_CFG[rental.status]
               const isHov = hovered === rental.id
+
+              /* ── MOBILE: compact horizontal card ──────────────────────── */
+              if (isMobile) {
+                return (
+                  <div
+                    key={rental.id}
+                    onClick={() => setDetailId(rental.id)}
+                    style={{
+                      background:   token.colorBgContainer,
+                      borderRadius: 14,
+                      border:       `1.5px solid ${token.colorBorderSecondary}`,
+                      overflow:     'hidden',
+                      boxShadow:    '0 1px 6px rgba(0,0,0,0.06)',
+                      cursor:       'pointer',
+                      display:      'flex',
+                      flexDirection:'column',
+                      opacity:      rental.status === 'Cancelled' ? 0.72 : 1,
+                    }}
+                  >
+                    {/* Status color top bar */}
+                    <div style={{ height:3, background:cfg.color }}/>
+
+                    <div style={{ padding:'11px 13px 12px', display:'flex', flexDirection:'column', gap:9 }}>
+
+                      {/* Row 1: ID + status badge + eye button */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:'rgba(22,119,255,0.1)', color:'#1677ff',
+                          border:'1px solid rgba(22,119,255,0.2)',
+                          flexShrink:0,
+                        }}>
+                          #{rental.id}
+                        </span>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:cfg.bg, color:cfg.color,
+                          border:`1px solid ${cfg.color}40`,
+                          display:'inline-flex', alignItems:'center', gap:3,
+                          flexShrink:0,
+                        }}>
+                          {cfg.icon} {cfg.label}
+                        </span>
+                        <div style={{ flex:1 }}/>
+                        <button
+                          onClick={e => { e.stopPropagation(); setDetailId(rental.id) }}
+                          style={{
+                            width:28, height:28, borderRadius:7, border:'none',
+                            background:`${cfg.color}18`,
+                            display:'flex', alignItems:'center', justifyContent:'center',
+                            cursor:'pointer', flexShrink:0, color:cfg.color, fontSize:13,
+                          }}
+                        >
+                          <EyeOutlined/>
+                        </button>
+                      </div>
+
+                      {/* Row 2: Car info */}
+                      <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                        <div style={{
+                          width:34, height:34, borderRadius:9, flexShrink:0,
+                          background:`linear-gradient(135deg,${cfg.color}22,${cfg.color}10)`,
+                          border:`1px solid ${cfg.color}30`,
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                        }}>
+                          <CarFilled style={{ color:cfg.color, fontSize:15 }}/>
+                        </div>
+                        <div style={{ minWidth:0 }}>
+                          <div style={{
+                            fontWeight:800, fontSize:14, color:token.colorText,
+                            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                          }}>
+                            {rental.carBrand} {rental.carModel}
+                          </div>
+                          <div style={{ fontSize:10, color:token.colorTextTertiary }}>{rental.licensePlate}</div>
+                        </div>
+                      </div>
+
+                      {/* Admin: customer name */}
+                      {isAdmin && (
+                        <div style={{
+                          padding:'5px 9px', borderRadius:7,
+                          background:token.colorFillAlter,
+                          border:`1px solid ${token.colorBorderSecondary}`,
+                          fontSize:11, color:token.colorTextSecondary,
+                        }}>
+                          👤 <strong style={{ color:token.colorText }}>{rental.customerName}</strong>
+                        </div>
+                      )}
+
+                      {/* Row 3: Dates */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <CalendarFilled style={{ color:'#1677ff', fontSize:12, flexShrink:0 }}/>
+                        <span style={{ fontSize:12, fontWeight:600, color:token.colorText }}>
+                          {format(new Date(rental.startDate), 'dd.MM.yy')}
+                          <span style={{ color:token.colorTextTertiary, margin:'0 4px' }}>→</span>
+                          {format(new Date(rental.endDate), 'dd.MM.yy')}
+                        </span>
+                        <span style={{
+                          marginLeft:'auto', fontSize:10, fontWeight:700,
+                          padding:'1px 7px', borderRadius:20,
+                          background:token.colorFillAlter, color:token.colorTextSecondary,
+                          border:`1px solid ${token.colorBorderSecondary}`,
+                          flexShrink:0,
+                        }}>
+                          {rental.totalDays} kun
+                        </span>
+                      </div>
+
+                      {/* Row 4: Branch (truncated) */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <EnvironmentFilled style={{ color:'#fa8c16', fontSize:12, flexShrink:0 }}/>
+                        <span style={{
+                          fontSize:11, color:token.colorTextSecondary,
+                          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                        }}>
+                          {rental.pickupBranch}
+                          {rental.returnBranch && rental.returnBranch !== rental.pickupBranch && ` → ${rental.returnBranch}`}
+                        </span>
+                      </div>
+
+                      {/* Row 5: Amount footer */}
+                      <div style={{
+                        display:'flex', alignItems:'center', justifyContent:'space-between',
+                        padding:'8px 10px', borderRadius:9,
+                        background:'linear-gradient(135deg,rgba(22,119,255,0.07),rgba(99,102,241,0.07))',
+                        border:'1px solid rgba(22,119,255,0.12)',
+                        marginTop:2,
+                      }}>
+                        <div>
+                          <div style={{ fontSize:9, color:token.colorTextTertiary }}>Jami summa</div>
+                          <div>
+                            <span style={{ fontWeight:800, fontSize:16, color:'#1677ff' }}>{fmt(rental.totalAmount)}</span>
+                            <span style={{ fontSize:10, color:token.colorTextTertiary, marginLeft:2 }}>so'm</span>
+                          </div>
+                        </div>
+                        {rental.promotionCode ? (
+                          <span style={{
+                            fontSize:9, fontWeight:700, padding:'2px 7px', borderRadius:20,
+                            background:'rgba(82,196,26,0.1)', color:'#52c41a',
+                            border:'1px solid rgba(82,196,26,0.2)',
+                          }}>
+                            🏷 {rental.promotionCode}
+                          </span>
+                        ) : rental.actualReturnDate ? (
+                          <span style={{ fontSize:10, color:'#52c41a', fontWeight:600 }}>
+                            ✓ Qaytarildi
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              /* ── DESKTOP: original vertical card ──────────────────────── */
               return (
                 <div
                   key={rental.id}

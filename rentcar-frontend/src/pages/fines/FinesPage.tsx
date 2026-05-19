@@ -79,7 +79,7 @@ export default function FinesPage() {
   const cols       = isMobile ? 1 : !screens.lg ? 2 : 3
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div style={{ paddingBottom: isMobile ? 80 : 48 }}>
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <div style={{
@@ -182,7 +182,12 @@ export default function FinesPage() {
           </div>
 
           {/* Status filter chips */}
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          <div style={{
+            display:'flex', gap:8,
+            ...(isMobile
+              ? { overflowX:'auto', flexWrap:'nowrap', paddingBottom:4, scrollbarWidth:'none' }
+              : { flexWrap:'wrap' }),
+          }}>
             {STATUSES.map(s => {
               const cfg   = s === 'all' ? null : STATUS_CFG[s as FineStatus]
               const active = s === 'all' ? !statusFilter : statusFilter === s
@@ -275,10 +280,170 @@ export default function FinesPage() {
           </div>
 
           {/* Cards grid */}
-          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?14:20, marginBottom:24 }}>
+          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?12:20, marginBottom:24 }}>
             {items.map(fine => {
               const cfg   = STATUS_CFG[fine.status]
               const isHov = hovered === fine.id
+
+              /* ── MOBILE: compact fine card ──────────────────────────── */
+              if (isMobile) {
+                return (
+                  <div
+                    key={fine.id}
+                    style={{
+                      background:    token.colorBgContainer,
+                      borderRadius:  14,
+                      border:        `1.5px solid ${fine.status === 'Pending' ? 'rgba(255,77,79,0.3)' : token.colorBorderSecondary}`,
+                      overflow:      'hidden',
+                      boxShadow:     fine.status === 'Pending'
+                        ? '0 2px 10px rgba(255,77,79,0.1)'
+                        : '0 1px 6px rgba(0,0,0,0.06)',
+                      display:       'flex',
+                      flexDirection: 'column',
+                      opacity:       fine.status === 'Cancelled' ? 0.65 : 1,
+                    }}
+                  >
+                    <div style={{ height:3, background:cfg.color }}/>
+
+                    <div style={{ padding:'11px 13px 12px', display:'flex', flexDirection:'column', gap:9 }}>
+
+                      {/* Row 1: badges row */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:'rgba(255,77,79,0.1)', color:'#ff4d4f',
+                          border:'1px solid rgba(255,77,79,0.2)',
+                        }}>
+                          Jarima #{fine.id}
+                        </span>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:'rgba(22,119,255,0.1)', color:'#1677ff',
+                          border:'1px solid rgba(22,119,255,0.2)',
+                        }}>
+                          Ijara #{fine.rentalId}
+                        </span>
+                        <span style={{
+                          marginLeft:'auto',
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:cfg.bg, color:cfg.color,
+                          border:`1px solid ${cfg.color}40`,
+                          display:'inline-flex', alignItems:'center', gap:3, flexShrink:0,
+                        }}>
+                          {cfg.icon} {cfg.label}
+                        </span>
+                      </div>
+
+                      {/* Row 2: Amount (prominent) + date */}
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <div>
+                          <div style={{ fontSize:9, color:token.colorTextTertiary }}>Jarima miqdori</div>
+                          <div style={{
+                            fontWeight:800, fontSize:22, lineHeight:1,
+                            color: fine.status === 'Paid' ? '#52c41a' : '#ff4d4f',
+                          }}>
+                            {fmt(fine.amount)}
+                            <span style={{ fontSize:11, fontWeight:500, color:token.colorTextTertiary, marginLeft:3 }}>so'm</span>
+                          </div>
+                        </div>
+                        <div style={{ textAlign:'right' }}>
+                          <div style={{ fontSize:9, color:token.colorTextTertiary }}>Sana</div>
+                          <div style={{ fontSize:12, fontWeight:600, color:token.colorText }}>
+                            {format(new Date(fine.issuedDate), 'dd.MM.yyyy')}
+                          </div>
+                          {fine.paidDate && (
+                            <div style={{ fontSize:10, color:'#52c41a' }}>
+                              ✓ {format(new Date(fine.paidDate), 'dd.MM.yy')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Admin: customer */}
+                      {isManager && (
+                        <div style={{
+                          padding:'5px 9px', borderRadius:7,
+                          background:token.colorFillAlter,
+                          border:`1px solid ${token.colorBorderSecondary}`,
+                          fontSize:11, color:token.colorTextSecondary,
+                        }}>
+                          👤 <strong style={{ color:token.colorText }}>{fine.customerName}</strong>
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      <div style={{ display:'flex', gap:7, alignItems:'flex-start' }}>
+                        <WarningFilled style={{ color:'#ff4d4f', fontSize:12, marginTop:2, flexShrink:0 }}/>
+                        <span style={{ fontSize:12, color:token.colorText, lineHeight:1.5, fontWeight:500 }}>
+                          {fine.description}
+                        </span>
+                      </div>
+
+                      {/* Notes */}
+                      {fine.notes && (
+                        <div style={{
+                          fontSize:11, color:token.colorTextSecondary,
+                          padding:'5px 9px', borderRadius:7,
+                          background:token.colorFillAlter,
+                          border:`1px solid ${token.colorBorderSecondary}`,
+                        }}>
+                          📝 {fine.notes}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Admin: mark-as-paid */}
+                    {isManager && fine.status === 'Pending' && (
+                      <div style={{
+                        padding:'8px 13px',
+                        borderTop:`1px solid ${token.colorBorderSecondary}`,
+                        background:token.colorFillAlter,
+                      }}>
+                        <Popconfirm
+                          title="To'langan deb belgilash?"
+                          description="Bu amalni qaytarib bo'lmaydi."
+                          onConfirm={() => handlePay(fine.id)}
+                          okText="Ha, to'landi"
+                          cancelText="Bekor"
+                          okButtonProps={{ style:{ background:'#52c41a', borderColor:'#52c41a' } }}
+                        >
+                          <Button
+                            type="text" icon={<CheckOutlined/>} block
+                            loading={payLoading === fine.id}
+                            style={{ color:'#52c41a', fontWeight:600, borderRadius:8, fontSize:12, height:32 }}
+                          >
+                            To'landi deb belgilash
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                    )}
+
+                    {/* Customer: pay button */}
+                    {isCustomer && fine.status === 'Pending' && (
+                      <div style={{
+                        padding:'10px 13px',
+                        borderTop:`1px solid rgba(255,77,79,0.15)`,
+                        background:'linear-gradient(135deg,rgba(255,77,79,0.04),rgba(250,140,22,0.04))',
+                      }}>
+                        <Button
+                          type="primary" danger block icon={<DollarCircleFilled/>}
+                          onClick={() => setPayingFine(fine)}
+                          style={{
+                            borderRadius:9, fontWeight:700,
+                            background:'linear-gradient(135deg,#ff4d4f,#fa8c16)',
+                            border:'none', boxShadow:'0 3px 12px rgba(255,77,79,0.3)',
+                            height:40,
+                          }}
+                        >
+                          {fmt(fine.amount)} so'm to'lash
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              /* ── DESKTOP: original card ──────────────────────────────── */
               return (
                 <div
                   key={fine.id}

@@ -236,7 +236,7 @@ export default function CustomerHomePage() {
   const colsQ = isMobile ? 3  : isLarge ? 6 : 3   // quick links columns
 
   return (
-    <div style={{ paddingBottom: 32, maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ paddingBottom: isMobile ? 80 : 32, maxWidth: 1200, margin: '0 auto' }}>
 
       {/* ════════════════════════════════════════════════════════════════════
           HERO BANNER

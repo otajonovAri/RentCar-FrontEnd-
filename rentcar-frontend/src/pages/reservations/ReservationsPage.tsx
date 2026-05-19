@@ -74,7 +74,7 @@ export default function ReservationsPage() {
   const cols       = isMobile ? 1 : !screens.lg ? 2 : 3
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div style={{ paddingBottom: isMobile ? 80 : 48 }}>
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <div style={{
@@ -159,7 +159,12 @@ export default function ReservationsPage() {
           </div>
 
           {/* Status filter chips */}
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          <div style={{
+            display:'flex', gap:8,
+            ...(isMobile
+              ? { overflowX:'auto', flexWrap:'nowrap', paddingBottom:4, scrollbarWidth:'none' }
+              : { flexWrap:'wrap' }),
+          }}>
             {STATUSES.map(s => {
               const cfg   = s === 'all' ? null : STATUS_CFG[s as ReservationStatus]
               const active = s === 'all' ? !statusFilter : statusFilter === s
@@ -235,11 +240,168 @@ export default function ReservationsPage() {
           </div>
 
           {/* Cards grid */}
-          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?14:20, marginBottom:24 }}>
+          <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:isMobile?12:20, marginBottom:24 }}>
             {items.map(res => {
               const cfg   = STATUS_CFG[res.status]
               const isHov = hovered === res.id
               const canCancel = res.status !== 'Cancelled' && res.status !== 'Completed'
+
+              /* ── MOBILE: compact card ───────────────────────────────── */
+              if (isMobile) {
+                return (
+                  <div
+                    key={res.id}
+                    style={{
+                      background:    token.colorBgContainer,
+                      borderRadius:  14,
+                      border:        `1.5px solid ${token.colorBorderSecondary}`,
+                      overflow:      'hidden',
+                      boxShadow:     '0 1px 6px rgba(0,0,0,0.06)',
+                      display:       'flex',
+                      flexDirection: 'column',
+                      opacity:       res.status === 'Cancelled' ? 0.72 : 1,
+                    }}
+                  >
+                    <div style={{ height:3, background:cfg.color }}/>
+
+                    <div style={{ padding:'11px 13px 12px', display:'flex', flexDirection:'column', gap:9 }}>
+
+                      {/* Row 1: ID + status */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:'rgba(22,119,255,0.1)', color:'#1677ff',
+                          border:'1px solid rgba(22,119,255,0.2)', flexShrink:0,
+                        }}>
+                          #{res.id}
+                        </span>
+                        <span style={{
+                          fontSize:10, fontWeight:700, padding:'1px 7px', borderRadius:20,
+                          background:cfg.bg, color:cfg.color,
+                          border:`1px solid ${cfg.color}40`,
+                          display:'inline-flex', alignItems:'center', gap:3, flexShrink:0,
+                        }}>
+                          {cfg.icon} {cfg.label}
+                        </span>
+                      </div>
+
+                      {/* Row 2: Car info */}
+                      <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                        <div style={{
+                          width:34, height:34, borderRadius:9, flexShrink:0,
+                          background:`linear-gradient(135deg,${cfg.color}22,${cfg.color}10)`,
+                          border:`1px solid ${cfg.color}30`,
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                        }}>
+                          <CarFilled style={{ color:cfg.color, fontSize:15 }}/>
+                        </div>
+                        <div style={{ minWidth:0 }}>
+                          <div style={{
+                            fontWeight:800, fontSize:14, color:token.colorText,
+                            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                          }}>
+                            {res.carBrand} {res.carModel}
+                          </div>
+                          <div style={{ fontSize:10, color:token.colorTextTertiary }}>{res.licensePlate}</div>
+                        </div>
+                      </div>
+
+                      {/* Admin: customer */}
+                      {isAdmin && (
+                        <div style={{
+                          padding:'5px 9px', borderRadius:7,
+                          background:token.colorFillAlter,
+                          border:`1px solid ${token.colorBorderSecondary}`,
+                          fontSize:11, color:token.colorTextSecondary,
+                        }}>
+                          👤 <strong style={{ color:token.colorText }}>{res.customerName}</strong>
+                        </div>
+                      )}
+
+                      {/* Row 3: Dates */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <CalendarFilled style={{ color:'#1677ff', fontSize:12, flexShrink:0 }}/>
+                        <span style={{ fontSize:12, fontWeight:600, color:token.colorText }}>
+                          {format(new Date(res.startDate), 'dd.MM.yy')}
+                          <span style={{ color:token.colorTextTertiary, margin:'0 4px' }}>→</span>
+                          {format(new Date(res.endDate), 'dd.MM.yy')}
+                        </span>
+                        <span style={{
+                          marginLeft:'auto', fontSize:10, fontWeight:700,
+                          padding:'1px 7px', borderRadius:20,
+                          background:token.colorFillAlter, color:token.colorTextSecondary,
+                          border:`1px solid ${token.colorBorderSecondary}`, flexShrink:0,
+                        }}>
+                          {res.totalDays} kun
+                        </span>
+                      </div>
+
+                      {/* Row 4: Branch */}
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <EnvironmentFilled style={{ color:'#fa8c16', fontSize:12, flexShrink:0 }}/>
+                        <span style={{
+                          fontSize:11, color:token.colorTextSecondary,
+                          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                        }}>
+                          {res.pickupBranch}
+                          {res.returnBranch && res.returnBranch !== res.pickupBranch && ` → ${res.returnBranch}`}
+                        </span>
+                      </div>
+
+                      {/* Row 5: Amount */}
+                      <div style={{
+                        display:'flex', alignItems:'center', justifyContent:'space-between',
+                        padding:'8px 10px', borderRadius:9,
+                        background:'linear-gradient(135deg,rgba(22,119,255,0.07),rgba(99,102,241,0.07))',
+                        border:'1px solid rgba(22,119,255,0.12)', marginTop:2,
+                      }}>
+                        <div>
+                          <div style={{ fontSize:9, color:token.colorTextTertiary }}>Taxminiy narx</div>
+                          <div>
+                            <span style={{ fontWeight:800, fontSize:16, color:'#1677ff' }}>{fmt(res.estimatedAmount)}</span>
+                            <span style={{ fontSize:10, color:token.colorTextTertiary, marginLeft:2 }}>so'm</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cancel footer */}
+                    {canCancel && (
+                      <div style={{
+                        padding:'8px 13px',
+                        borderTop:`1px solid ${token.colorBorderSecondary}`,
+                        background:token.colorFillAlter,
+                      }}>
+                        <Popconfirm
+                          title="Bekor qilishni tasdiqlaysizmi?"
+                          description={
+                            <Input
+                              placeholder="Sabab (ixtiyoriy)..."
+                              value={cancelReason}
+                              onChange={e => setCancelReason(e.target.value)}
+                              style={{ marginTop:4 }}
+                            />
+                          }
+                          onConfirm={() => handleCancel(res.id)}
+                          onCancel={() => setCancelReason('')}
+                          okText="Ha, bekor qil"
+                          cancelText="Yo'q"
+                          okButtonProps={{ danger:true }}
+                        >
+                          <Button
+                            type="text" danger icon={<CloseOutlined/>} block
+                            style={{ fontWeight:600, borderRadius:8, fontSize:12, height:32 }}
+                          >
+                            Bekor qilish
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              /* ── DESKTOP: original card ──────────────────────────────── */
               return (
                 <div
                   key={res.id}

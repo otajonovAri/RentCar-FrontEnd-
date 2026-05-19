@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Card, Form, Input, DatePicker, Button, Row, Col, Avatar,
   Typography, Tag, Spin, Divider, message, Space, Tabs, Upload,
-  Badge, Tooltip, theme,
+  Badge, Tooltip, theme, Grid,
 } from 'antd'
 import {
   UserOutlined, EditOutlined, SaveOutlined, CloseOutlined,
@@ -41,6 +41,8 @@ const GRADIENT_BY_ROLE: Record<string, string> = {
 export default function ProfilePage() {
   const { userId, fullName, email, role, setAuth, updateAvatar, accessToken, refreshToken } = useAuthStore()
   const { token: themeToken } = theme.useToken()
+  const screens   = Grid.useBreakpoint()
+  const isMobile  = !screens.md
   const [form] = Form.useForm()
   const [licenseForm] = Form.useForm()
 
@@ -332,7 +334,7 @@ export default function ProfilePage() {
 
   return (
     <Spin spinning={loading}>
-      <Row gutter={[24, 24]} style={{ maxWidth: 1000, margin: '0 auto' }}>
+      <Row gutter={[24, 24]} style={{ maxWidth: 1000, margin: '0 auto', paddingBottom: isMobile ? 80 : 48 }}>
 
         {/* ── Chap: Profil kartochkasi ────────────────────────────────── */}
         <Col xs={24} md={9}>
@@ -340,7 +342,7 @@ export default function ProfilePage() {
 
             {/* Cover gradient */}
             <div style={{
-              height: 100,
+              height: isMobile ? 80 : 100,
               background: gradient,
               position: 'relative',
             }} />

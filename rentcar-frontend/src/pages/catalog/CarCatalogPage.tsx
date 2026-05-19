@@ -65,7 +65,7 @@ export default function CarCatalogPage() {
   const availableCount = cars.filter(c => c.status === 'Available').length
 
   return (
-    <div style={{ paddingBottom: 48 }}>
+    <div style={{ paddingBottom: isMobile ? 80 : 48 }}>
 
       {/* ── HERO BANNER ─────────────────────────────────────────────────────── */}
       <div style={{
