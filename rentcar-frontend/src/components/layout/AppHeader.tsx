@@ -1,20 +1,18 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Layout, Button, Avatar, Dropdown, Typography, Space,
+  Layout, Button, Avatar, Typography, Space,
   Tooltip, theme, Grid, Badge,
 } from 'antd'
 import {
   MenuFoldOutlined, MenuUnfoldOutlined,
-  LogoutOutlined, SettingOutlined, SunOutlined, MoonOutlined,
+  SunOutlined, MoonOutlined,
   BellOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
-import { authApi } from '@/api/authApi'
 import { conversationsApi } from '@/api/conversationsApi'
 import { notificationsApi } from '@/api/notificationsApi'
-import type { MenuProps } from 'antd'
 
 const { Header } = Layout
 const { Text } = Typography
@@ -34,7 +32,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
   const navigate = useNavigate()
-  const { fullName, role, logout, userId, avatarUrl } = useAuthStore()
+  const { fullName, role, userId, avatarUrl } = useAuthStore()
   const { isDark, toggle } = useThemeStore()
   const { token } = theme.useToken()
   const screens   = Grid.useBreakpoint()
@@ -61,20 +59,8 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
     return () => clearInterval(t)
   }, [loadCounts])
 
-  // ── Logout ──────────────────────────────────────────────────────────────────
-  const handleLogout = async () => {
-    try { await authApi.logout() } catch { /* ignore */ }
-    finally { logout(); navigate('/login', { replace: true }) }
-  }
-
   const initials = (fullName ?? 'U')
     .split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
-
-  const menuItems: MenuProps['items'] = [
-    { key: 'profile', icon: <SettingOutlined />, label: 'Profil sozlamalari', onClick: () => navigate('/profile') },
-    { type: 'divider' },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Chiqish', danger: true, onClick: handleLogout },
-  ]
 
   return (
     <Header style={{
@@ -114,28 +100,29 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
           />
         </Badge>
 
-        {/* User dropdown — Customer/Owner mobile'da ko'rinmaydi (bottom nav'da profil bor) */}
+        {/* User avatar — Customer/Owner mobile'da ko'rinmaydi (bottom nav'da profil bor) */}
         {!(isMobile && isClient) && (
-          <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow>
-            <Space style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
-              <Avatar
-                size={34}
-                src={avatarUrl ?? undefined}
-                style={{
-                  background: 'linear-gradient(135deg, #1677ff 0%, #6366f1 100%)',
-                  fontWeight: 700, fontSize: 14, flexShrink: 0,
-                }}
-              >
-                {!avatarUrl && initials}
-              </Avatar>
-              <div style={{ display: screens?.sm ? 'flex' : 'none', flexDirection: 'column', lineHeight: 1.3 }}>
-                <Text strong style={{ fontSize: 13 }}>{fullName}</Text>
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  {ROLE_LABELS[role ?? ''] ?? role}
-                </Text>
-              </div>
-            </Space>
-          </Dropdown>
+          <Space
+            onClick={() => navigate('/profile')}
+            style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}
+          >
+            <Avatar
+              size={34}
+              src={avatarUrl ?? undefined}
+              style={{
+                background: 'linear-gradient(135deg, #1677ff 0%, #6366f1 100%)',
+                fontWeight: 700, fontSize: 14, flexShrink: 0,
+              }}
+            >
+              {!avatarUrl && initials}
+            </Avatar>
+            <div style={{ display: screens?.sm ? 'flex' : 'none', flexDirection: 'column', lineHeight: 1.3 }}>
+              <Text strong style={{ fontSize: 13 }}>{fullName}</Text>
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                {ROLE_LABELS[role ?? ''] ?? role}
+              </Text>
+            </div>
+          </Space>
         )}
       </Space>
     </Header>
