@@ -172,11 +172,13 @@ export default function SuhbatlarPage() {
   }, [])
 
   // ── Height ────────────────────────────────────────────────────────────────
-  // Mobile: 56px header + 12px top padding + 60px bottom nav + 12px bottom padding = 140px
-  // Desktop: 56px header + 24px top padding + 24px bottom padding = 104px
+  // Scroll container = flex:1 div (100vh - 56px header)
+  // Content padding: mobile 12px×2=24px, desktop 24px×2=48px
+  // Mobile: 60px bottom nav + 24px content padding = 84px extra
+  // Desktop: 48px content padding only
   const pageHeight = isMobile
-    ? 'calc(100dvh - 140px)'
-    : 'calc(100vh - 104px)'
+    ? 'calc(100dvh - 56px - 84px)'
+    : 'calc(100vh - 56px - 48px)'
 
   // Filtered conversations
   const filteredConvs = statusFilter === 'all'

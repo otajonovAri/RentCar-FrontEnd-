@@ -67,7 +67,7 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
       padding: '0 20px', display: 'flex', alignItems: 'center',
       justifyContent: 'space-between', background: token.colorBgContainer,
       boxShadow: `0 1px 0 ${token.colorBorderSecondary}`,
-      position: 'sticky', top: 0, zIndex: 10, height: 56,
+      zIndex: 10, height: 56, flexShrink: 0,
     }}>
       {/* Chap: sidebar toggle */}
       <Button

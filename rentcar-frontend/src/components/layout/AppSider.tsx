@@ -106,7 +106,6 @@ function CustomerSider({ collapsed }: { collapsed: boolean }) {
       width: collapsed ? 64 : 220,
       transition: 'width 0.2s',
       overflow: 'hidden', flexShrink: 0,
-      position: 'sticky', top: 0,
     }}>
       {/* Logo */}
       <div style={{
@@ -295,7 +294,7 @@ export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      style={{ overflow: 'auto', height: '100vh', position: 'sticky', top: 0 }}
+      style={{ overflow: 'auto', height: '100vh', flexShrink: 0 }}
       width={220}
     >
       {/* Logo */}

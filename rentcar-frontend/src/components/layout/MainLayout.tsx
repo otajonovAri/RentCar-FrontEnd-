@@ -39,8 +39,8 @@ export default function MainLayout() {
   }, [loadUnread])
 
   return (
-    <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
-      {/* Desktop: sticky Sider */}
+    <Layout style={{ height: '100vh', overflow: 'hidden', background: token.colorBgLayout, flexDirection: 'row' }}>
+      {/* Desktop: Sider */}
       {!isMobile && (
         <AppSider collapsed={collapsed} />
       )}
@@ -62,21 +62,33 @@ export default function MainLayout() {
         </Drawer>
       )}
 
-      <Layout style={{ background: token.colorBgLayout }}>
+      {/* Right side: header (fixed) + scrollable content below */}
+      <div style={{
+        flex:           1,
+        display:        'flex',
+        flexDirection:  'column',
+        height:         '100vh',
+        overflow:       'hidden',
+        background:     token.colorBgLayout,
+        minWidth:       0,
+      }}>
         <AppHeader
           collapsed={collapsed}
           onToggle={isMobile ? () => setDrawerOpen(true) : () => setCollapsed((c) => !c)}
         />
-        <Content
-          style={{
-            padding:    isMobile ? '12px' : '24px',
-            minHeight:  'calc(100vh - 56px)',
-            background: token.colorBgLayout,
-          }}
-        >
-          <Outlet />
-        </Content>
-      </Layout>
+
+        {/* Scrollable content area — header bu zone'dan tashqarida */}
+        <div style={{ flex: 1, overflow: 'auto', background: token.colorBgLayout }}>
+          <Content
+            style={{
+              padding:    isMobile ? '12px' : '24px',
+              background: token.colorBgLayout,
+            }}
+          >
+            <Outlet />
+          </Content>
+        </div>
+      </div>
 
       {/* Customer mobile bottom navigation */}
       <CustomerBottomNav unreadMessages={unreadMsgs} />
