@@ -227,7 +227,7 @@ export default function MobileDrawerMenu({ onClose }: Props) {
         flexShrink:  0,
         paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
       }}>
-        {/* Logout */}
+        {/* Logout — barcha rollar uchun */}
         <button
           onClick={handleLogout}
           style={{
@@ -253,31 +253,33 @@ export default function MobileDrawerMenu({ onClose }: Props) {
           Chiqish
         </button>
 
-        {/* Delete account */}
-        <button
-          onClick={handleDeleteAccount}
-          style={{
-            display:      'flex',
-            alignItems:   'center',
-            gap:          12,
-            width:        '100%',
-            padding:      '11px 14px',
-            borderRadius: 10,
-            border:       '1px solid rgba(255,77,79,0.3)',
-            background:   'rgba(255,77,79,0.06)',
-            cursor:       'pointer',
-            color:        '#ff4d4f',
-            fontSize:     14,
-            fontWeight:   600,
-            textAlign:    'left',
-            transition:   'background 0.15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,77,79,0.14)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,77,79,0.06)' }}
-        >
-          <DeleteOutlined style={{ fontSize: 16 }} />
-          Hisobni o'chirish
-        </button>
+        {/* Delete account — faqat Customer / Owner uchun */}
+        {(role === 'Customer' || role === 'Owner') && (
+          <button
+            onClick={handleDeleteAccount}
+            style={{
+              display:      'flex',
+              alignItems:   'center',
+              gap:          12,
+              width:        '100%',
+              padding:      '11px 14px',
+              borderRadius: 10,
+              border:       '1px solid rgba(255,77,79,0.3)',
+              background:   'rgba(255,77,79,0.06)',
+              cursor:       'pointer',
+              color:        '#ff4d4f',
+              fontSize:     14,
+              fontWeight:   600,
+              textAlign:    'left',
+              transition:   'background 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,77,79,0.14)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,77,79,0.06)' }}
+          >
+            <DeleteOutlined style={{ fontSize: 16 }} />
+            Hisobni o'chirish
+          </button>
+        )}
       </div>
 
       {/* Delete account confirmation modal */}
