@@ -44,8 +44,8 @@ export const usersApi = {
   getFullHistory: (userId: number) =>
     api.get<UserFullHistoryDto>(`/api/users/${userId}/full-history`),
 
-  getDeletionRequests: () =>
-    api.get<AccountDeletionRequestDto[]>('/api/users/deletion-requests'),
+  getDeletionRequests: (status?: 'Pending' | 'Approved' | 'Rejected') =>
+    api.get<AccountDeletionRequestDto[]>('/api/users/deletion-requests', { params: status ? { status } : undefined }),
 
   approveDeletion: (userId: number) =>
     api.patch<{ message: string }>(`/api/users/${userId}/approve-deletion`),

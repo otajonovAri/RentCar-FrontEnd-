@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Layout, Menu, Avatar, Modal, message, Spin, Space } from 'antd'
+import { useState, useEffect } from 'react'
+import { Layout, Menu, Avatar, Modal, message, Spin, Space, Badge } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   HomeFilled, CarFilled, CalendarFilled,
@@ -71,7 +71,8 @@ const menuItems: MenuItem[] = [
   { key: '/car-features',   icon: <UnorderedListOutlined />,   label: 'Xususiyatlar',        roles: ['Admin', 'SuperAdmin'] },
   { key: '/brands',         icon: <ShopFilled />,              label: 'Brendlar',            roles: ['Admin', 'SuperAdmin'] },
   { key: '/car-models',     icon: <AppstoreFilled />,          label: 'Modellar',            roles: ['Admin', 'SuperAdmin'] },
-  { key: '/users',          icon: <CrownFilled />,             label: 'Foydalanuvchilar',    roles: ['Admin', 'SuperAdmin'] },
+  { key: '/users',              icon: <CrownFilled />,             label: 'Foydalanuvchilar',        roles: ['Admin', 'SuperAdmin'] },
+  { key: '/deletion-requests',  icon: <DeleteOutlined />,          label: "O'chirish so'rovlari",     roles: ['Admin', 'SuperAdmin'] },
 ]
 
 interface AppSiderProps {
@@ -363,6 +364,16 @@ export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
 
   const isCustomer = role === 'Customer' || role === 'Owner'
 
+  // Pending deletion requests count (Admin/SuperAdmin only)
+  const [pendingCount, setPendingCount] = useState(0)
+  const isAdmin = role === 'Admin' || role === 'SuperAdmin'
+  useEffect(() => {
+    if (!isAdmin) return
+    usersApi.getDeletionRequests('Pending')
+      .then(res => setPendingCount(res.data.length))
+      .catch(() => {/* silently ignore */})
+  }, [isAdmin])
+
   if (isCustomer) return <CustomerSider collapsed={collapsed} />
 
   const visibleItems = menuItems.filter(
@@ -408,8 +419,19 @@ export default function AppSider({ collapsed, onMenuClick }: AppSiderProps) {
             style={{ border: 'none', marginTop: 4 }}
             items={visibleItems.map(item => ({
               key:     item.key,
-              icon:    item.icon,
-              label:   item.label,
+              icon:    item.key === '/deletion-requests' && pendingCount > 0
+                ? <Badge count={pendingCount} size="small" offset={[6, 0]}>{item.icon}</Badge>
+                : item.icon,
+              label:   item.key === '/deletion-requests' && pendingCount > 0 && !collapsed
+                ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {item.label}
+                    <span style={{
+                      background: '#ff4d4f', color: '#fff',
+                      borderRadius: 10, fontSize: 10, fontWeight: 700,
+                      padding: '1px 6px', marginLeft: 4,
+                    }}>{pendingCount}</span>
+                  </span>
+                : item.label,
               onClick: () => { navigate(item.key); onMenuClick?.() },
             }))}
           />

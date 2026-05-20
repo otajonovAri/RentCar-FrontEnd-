@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Avatar, Modal, message, Spin, Space } from 'antd'
 import {
@@ -71,7 +71,8 @@ const ALL_MENU_ITEMS: MenuItem[] = [
   { key: '/car-features',   icon: <UnorderedListOutlined />,   label: 'Xususiyatlar',          roles: ['Admin', 'SuperAdmin'] },
   { key: '/brands',         icon: <ShopFilled />,              label: 'Brendlar',              roles: ['Admin', 'SuperAdmin'] },
   { key: '/car-models',     icon: <AppstoreFilled />,          label: 'Modellar',              roles: ['Admin', 'SuperAdmin'] },
-  { key: '/users',          icon: <CrownFilled />,             label: 'Foydalanuvchilar',      roles: ['Admin', 'SuperAdmin'] },
+  { key: '/users',              icon: <CrownFilled />,             label: 'Foydalanuvchilar',        roles: ['Admin', 'SuperAdmin'] },
+  { key: '/deletion-requests',  icon: <DeleteOutlined />,          label: "O'chirish so'rovlari",     roles: ['Admin', 'SuperAdmin'] },
 ]
 
 interface Props { onClose: () => void }
@@ -83,6 +84,16 @@ export default function MobileDrawerMenu({ onClose }: Props) {
   const { fullName, role, avatarUrl, logout } = useAuthStore()
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+
+  // Pending deletion requests badge (Admin/SuperAdmin only)
+  const [pendingCount, setPendingCount] = useState(0)
+  const isAdmin = role === 'Admin' || role === 'SuperAdmin'
+  useEffect(() => {
+    if (!isAdmin) return
+    usersApi.getDeletionRequests('Pending')
+      .then(res => setPendingCount(res.data.length))
+      .catch(() => {/* silently ignore */})
+  }, [isAdmin])
 
   const rc = ROLE_COLORS[role ?? 'Customer'] ?? ROLE_COLORS.Customer
 
@@ -233,7 +244,16 @@ export default function MobileDrawerMenu({ onClose }: Props) {
               }}>
                 {item.label}
               </span>
-              {isActive && (
+              {item.key === '/deletion-requests' && pendingCount > 0 && (
+                <span style={{
+                  background: '#ff4d4f', color: '#fff',
+                  borderRadius: 10, fontSize: 10, fontWeight: 700,
+                  padding: '1px 7px', flexShrink: 0,
+                }}>
+                  {pendingCount}
+                </span>
+              )}
+              {isActive && item.key !== '/deletion-requests' && (
                 <span style={{
                   width: 6, height: 6, borderRadius: '50%',
                   background: '#60a5fa', flexShrink: 0,

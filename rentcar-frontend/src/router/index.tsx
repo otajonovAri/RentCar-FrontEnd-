@@ -82,13 +82,14 @@ const OwnersPage            = lazy(() => import('@/pages/owners/OwnersPage'))
 const OwnerContractsPage    = lazy(() => import('@/pages/ownerContracts/OwnerContractsPage'))
 
 // ── Admin+ ───────────────────────────────────────────────────────────────────
-const UsersPage       = lazy(() => import('@/pages/users/UsersPage'))
-const PricingTiersPage = lazy(() => import('@/pages/pricingTiers/PricingTiersPage'))
-const PromotionsPage  = lazy(() => import('@/pages/promotions/PromotionsPage'))
-const CarListingsPage = lazy(() => import('@/pages/carListings/CarListingsPage'))
-const CarFeaturesPage = lazy(() => import('@/pages/carFeatures/CarFeaturesPage'))
-const BrandsPage      = lazy(() => import('@/pages/brands/BrandsPage'))
-const CarModelsPage   = lazy(() => import('@/pages/carModels/CarModelsPage'))
+const UsersPage              = lazy(() => import('@/pages/users/UsersPage'))
+const DeletionRequestsPage   = lazy(() => import('@/pages/deletionRequests/DeletionRequestsPage'))
+const PricingTiersPage       = lazy(() => import('@/pages/pricingTiers/PricingTiersPage'))
+const PromotionsPage         = lazy(() => import('@/pages/promotions/PromotionsPage'))
+const CarListingsPage        = lazy(() => import('@/pages/carListings/CarListingsPage'))
+const CarFeaturesPage        = lazy(() => import('@/pages/carFeatures/CarFeaturesPage'))
+const BrandsPage             = lazy(() => import('@/pages/brands/BrandsPage'))
+const CarModelsPage          = lazy(() => import('@/pages/carModels/CarModelsPage'))
 
 // ── Router ────────────────────────────────────────────────────────────────────
 const router = createBrowserRouter([
@@ -164,13 +165,14 @@ const router = createBrowserRouter([
           {
             element: <PrivateRoute allowedRoles={['Admin', 'SuperAdmin']} />,
             children: [
-              { path: '/users',         element: <L><UsersPage /></L> },
-              { path: '/pricing-tiers', element: <L><PricingTiersPage /></L> },
-              { path: '/promotions',    element: <L><PromotionsPage /></L> },
-              { path: '/car-listings',  element: <L><CarListingsPage /></L> },
-              { path: '/car-features',  element: <L><CarFeaturesPage /></L> },
-              { path: '/brands',        element: <L><BrandsPage /></L> },
-              { path: '/car-models',    element: <L><CarModelsPage /></L> },
+              { path: '/users',              element: <L><UsersPage /></L> },
+              { path: '/deletion-requests',  element: <L><DeletionRequestsPage /></L> },
+              { path: '/pricing-tiers',      element: <L><PricingTiersPage /></L> },
+              { path: '/promotions',         element: <L><PromotionsPage /></L> },
+              { path: '/car-listings',       element: <L><CarListingsPage /></L> },
+              { path: '/car-features',       element: <L><CarFeaturesPage /></L> },
+              { path: '/brands',             element: <L><BrandsPage /></L> },
+              { path: '/car-models',         element: <L><CarModelsPage /></L> },
             ],
           },
         ],
