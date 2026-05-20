@@ -482,7 +482,7 @@ export default function ProfilePage() {
                 { title: 'Summa', dataIndex: 'totalAmount', render: (v: number) => `${v.toLocaleString()} UZS`, width: 120 },
                 { title: 'Holat', dataIndex: 'status', width: 90, render: (v: string) =>
                     <Tag color={STATUS_COLOR[v] ?? 'default'}>{v}</Tag> },
-                { title: 'Jarima', dataIndex: 'fineCount', width: 70, render: (v: number, r) =>
+                { title: 'Jarima', dataIndex: 'fineCount', width: 70, render: (v: number) =>
                     v > 0 ? <Tag color="red">{v} ta</Tag> : <CheckCircleOutlined style={{ color: '#52c41a' }} /> },
               ]}
             />
