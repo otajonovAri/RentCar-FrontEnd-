@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import {
   Drawer, Image, Space, Button, Popconfirm,
-  message, Divider, Upload, Spin,
+  message, Divider, Upload, Spin, theme,
 } from 'antd'
 import {
   PlusOutlined, DeleteOutlined, StarOutlined,
   ShoppingCartOutlined, LoadingOutlined, CalendarOutlined,
   CarOutlined, DashboardOutlined, TeamOutlined,
   ThunderboltOutlined, ToolOutlined, EnvironmentOutlined,
-  TagOutlined, CheckCircleFilled,
+  TagOutlined, CheckCircleFilled, CloseOutlined,
 } from '@ant-design/icons'
 import type { UploadProps } from 'antd'
 import { carsApi } from '@/api/carsApi'
@@ -16,6 +16,7 @@ import { uploadImage } from '@/api/uploadApi'
 import type { CarDetailDto, CarImage } from '@/types/cars'
 import StatusBadge from '@/components/shared/StatusBadge'
 import { useAuthStore } from '@/store/authStore'
+import { useThemeStore } from '@/store/themeStore'
 import RentalFormModal from '@/pages/rentals/components/RentalFormModal'
 import ReservationFormModal from '@/pages/reservations/components/ReservationFormModal'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -26,57 +27,11 @@ interface Props {
   onSuccess: () => void
 }
 
-// ── small helper ─────────────────────────────────────────────────────────────
-function InfoRow({
-  icon, label, value, highlight,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: React.ReactNode
-  highlight?: boolean
-}) {
-  return (
-    <div style={{
-      display:       'flex',
-      alignItems:    'center',
-      justifyContent:'space-between',
-      padding:       '10px 14px',
-      borderRadius:  10,
-      background:    highlight ? 'rgba(22,119,255,0.04)' : '#fafafa',
-      border:        highlight ? '1px solid rgba(22,119,255,0.15)' : '1px solid #f0f0f0',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8c8c8c', fontSize: 13 }}>
-        <span style={{ fontSize: 15, color: highlight ? '#1677ff' : '#595959' }}>{icon}</span>
-        {label}
-      </div>
-      <div style={{ fontWeight: 600, fontSize: 13, color: highlight ? '#1677ff' : '#262626' }}>
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
-  return (
-    <div style={{
-      flex:         1,
-      minWidth:     0,
-      padding:      '12px 14px',
-      borderRadius: 12,
-      background:   '#fff',
-      border:       '1px solid #f0f0f0',
-      boxShadow:    '0 1px 4px rgba(0,0,0,0.05)',
-      textAlign:    'center',
-    }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color: '#1677ff', lineHeight: 1.2 }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: '#8c8c8c', marginTop: 1 }}>{sub}</div>}
-      <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 3 }}>{label}</div>
-    </div>
-  )
-}
-
 export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
-  const isMobile = useIsMobile()
+  const isMobile   = useIsMobile()
+  const { token }  = theme.useToken()
+  const isDark     = useThemeStore(s => s.isDark)
+
   const [car,       setCar]       = useState<CarDetailDto | null>(null)
   const [carImages, setCarImages] = useState<CarImage[]>([])
   const [loading,   setLoading]   = useState(false)
@@ -90,6 +45,16 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
   const isAvailable = car?.status === 'Available'
 
   const mainImage = carImages.find(i => i.isMain) ?? carImages[0]
+
+  // ── theme-aware colours ─────────────────────────────────────────────────────
+  const bg        = isDark ? token.colorBgContainer      : '#ffffff'
+  const bgSub     = isDark ? token.colorBgElevated       : '#f7f8fa'
+  const bgCard    = isDark ? token.colorFillSecondary    : '#f0f5ff'
+  const border    = isDark ? token.colorBorderSecondary  : '#e8edf5'
+  const textMain  = token.colorText
+  const textSub   = token.colorTextSecondary
+  const textMuted = token.colorTextTertiary
+  const primary   = token.colorPrimary
 
   const reloadCar = async (id: number) => {
     const [carRes, imgsRes] = await Promise.all([
@@ -112,7 +77,7 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
       .finally(() => setLoading(false))
   }, [carId])
 
-  // ── Upload ─────────────────────────────────────────────────────────────────
+  // ── Upload ──────────────────────────────────────────────────────────────────
   const handleUpload: UploadProps['customRequest'] = async ({ file, onSuccess: done, onError }) => {
     if (!carId) return
     setUploading(true)
@@ -120,16 +85,11 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
       const result = await uploadImage(file as File)
       await carsApi.addImage(carId, { url: result.url, isMain: carImages.length === 0, displayOrder: carImages.length + 1 })
       message.success('Rasm muvaffaqiyatli yuklandi!')
-      await reloadCar(carId)
-      onSuccess()
-      done?.('ok')
+      await reloadCar(carId); onSuccess(); done?.('ok')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Rasm yuklashda xatolik'
-      message.error(msg)
-      onError?.(new Error(msg))
-    } finally {
-      setUploading(false)
-    }
+      message.error(msg); onError?.(new Error(msg))
+    } finally { setUploading(false) }
   }
 
   const beforeUpload: UploadProps['beforeUpload'] = (file) => {
@@ -160,135 +120,181 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
   return (
     <>
       <Drawer
-        title={null}
         open={!!carId}
         onClose={onClose}
-        width={isMobile ? '100vw' : 560}
+        width={isMobile ? '100vw' : 540}
         loading={loading}
-        styles={{ body: { padding: 0 }, header: { display: 'none' } }}
+        styles={{
+          body:    { padding: 0, background: bg, display: 'flex', flexDirection: 'column' },
+          wrapper: { boxShadow: isDark ? '0 0 40px rgba(0,0,0,0.6)' : '0 0 40px rgba(0,0,0,0.12)' },
+        }}
         closable={false}
+        title={null}
       >
         {car && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-            {/* ── Hero image + header ─────────────────────────────────────── */}
+            {/* ── Hero ────────────────────────────────────────────────────── */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              {/* Hero image */}
-              <div style={{
-                width: '100%', height: 220, overflow: 'hidden',
-                background: 'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)',
-              }}>
+              <div style={{ width: '100%', height: 210, overflow: 'hidden', background: isDark ? '#0a0a0f' : '#111827' }}>
                 {mainImage ? (
-                  <img
-                    src={mainImage.url}
-                    alt={carLabel}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.92 }}
-                  />
+                  <img src={mainImage.url} alt={carLabel}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.88 }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CarOutlined style={{ fontSize: 64, color: 'rgba(255,255,255,0.2)' }} />
+                    <CarOutlined style={{ fontSize: 72, color: 'rgba(255,255,255,0.12)' }} />
                   </div>
                 )}
-                {/* Gradient overlay */}
+                {/* bottom gradient */}
                 <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0,
-                  height: 100,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)',
+                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 110,
+                  background: 'linear-gradient(to top,rgba(0,0,0,0.82) 0%,transparent 100%)',
+                  pointerEvents: 'none',
                 }} />
               </div>
 
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                style={{
-                  position: 'absolute', top: 12, right: 12,
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.45)', border: 'none',
-                  color: '#fff', fontSize: 16, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backdropFilter: 'blur(4px)',
-                }}
-              >
-                ✕
+              {/* Close btn */}
+              <button onClick={onClose} style={{
+                position: 'absolute', top: 12, right: 12,
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.5)', border: 'none',
+                color: '#fff', fontSize: 13, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backdropFilter: 'blur(6px)',
+              }}>
+                <CloseOutlined />
               </button>
 
-              {/* Status badge on image */}
+              {/* Status */}
               <div style={{ position: 'absolute', top: 12, left: 12 }}>
                 <StatusBadge status={car.status} />
               </div>
 
-              {/* Title over image */}
-              <div style={{
-                position: 'absolute', bottom: 14, left: 16, right: 16,
-              }}>
-                <div style={{ color: '#fff', fontWeight: 800, fontSize: 20, lineHeight: 1.2, textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+              {/* Title */}
+              <div style={{ position: 'absolute', bottom: 14, left: 18, right: 50 }}>
+                <div style={{ color: '#fff', fontWeight: 800, fontSize: 20, lineHeight: 1.25, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
                   {car.brand} {car.model}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 }}>
-                  {car.year} · {car.licensePlate}
+                <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>{car.year}</span>
+                  <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.4)', display: 'inline-block' }} />
+                  <span>{car.licensePlate}</span>
                 </div>
               </div>
             </div>
 
-            {/* ── Scrollable body ─────────────────────────────────────────── */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '18px 18px 24px' }}>
+            {/* ── Scrollable body ──────────────────────────────────────────── */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 28px' }}>
 
-              {/* Stat cards */}
-              <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
-                <StatCard label="Kunlik narx"  value={`${car.dailyRate.toLocaleString()}`} sub="so'm" />
-                <StatCard label="Probeg"        value={`${(car.mileage / 1000).toFixed(0)}k`} sub="km" />
-                <StatCard label="O'rindiq"      value={car.seatCount} sub="ta" />
-                <StatCard label="Yil"            value={car.year} />
+              {/* ── Stat cards 2×2 ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: 'Kunlik narx', value: car.dailyRate.toLocaleString(), unit: "so'm",  icon: '💰' },
+                  { label: 'Probeg',       value: `${car.mileage.toLocaleString()}`, unit: 'km', icon: '🛣️' },
+                  { label: "O'rindiqlar",  value: `${car.seatCount}`,               unit: 'ta', icon: '💺' },
+                  { label: 'Ishlab chiqarilgan yili', value: `${car.year}`,          unit: '',   icon: '📅' },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    padding: '12px 14px', borderRadius: 12,
+                    background: bgCard,
+                    border: `1px solid ${border}`,
+                    display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <span style={{ fontSize: 22 }}>{s.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 11, color: textMuted, marginBottom: 2 }}>{s.label}</div>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: textMain, lineHeight: 1 }}>
+                        {s.value}
+                        {s.unit && <span style={{ fontSize: 11, fontWeight: 500, color: textSub, marginLeft: 3 }}>{s.unit}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Info rows */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
-                <InfoRow icon={<TagOutlined />}         label="Davlat raqami"  value={car.licensePlate} />
-                <InfoRow icon={<CarOutlined />}          label="Kategoriya"     value={car.category} />
-                <InfoRow icon={<ThunderboltOutlined />}  label="Yoqilg'i"       value={car.fuelType} />
-                <InfoRow icon={<ToolOutlined />}         label="Transmissiya"   value={car.transmissionType} />
-                <InfoRow icon={<DashboardOutlined />}    label="Rang"           value={
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{
-                      width: 14, height: 14, borderRadius: '50%',
-                      background: car.color.toLowerCase(),
-                      border: '1px solid #d9d9d9', flexShrink: 0,
-                      display: 'inline-block',
-                    }} />
-                    {car.color}
-                  </span>
-                } />
-                <InfoRow icon={<TeamOutlined />}         label="Sig'im"         value={`${car.seatCount} o'rindiq`} />
-                <InfoRow icon={<EnvironmentOutlined />}  label="Filial"         value={car.branchName} highlight />
+              {/* ── Filial card ── */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: 12, marginBottom: 16,
+                background: isDark
+                  ? `rgba(${parseInt(primary.slice(1,3),16)},${parseInt(primary.slice(3,5),16)},${parseInt(primary.slice(5,7),16)},0.12)`
+                  : '#e6f4ff',
+                border: `1px solid ${isDark ? 'rgba(22,119,255,0.25)' : 'rgba(22,119,255,0.2)'}`,
+              }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: primary,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <EnvironmentOutlined style={{ color: '#fff', fontSize: 17 }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: isDark ? 'rgba(22,119,255,0.8)' : '#1677ff', fontWeight: 600, marginBottom: 2 }}>
+                    Filial joylashuvi
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: textMain }}>
+                    {car.branchName}
+                  </div>
+                </div>
               </div>
 
-              {/* Description */}
+              {/* ── Info rows ── */}
+              <div style={{
+                borderRadius: 12, overflow: 'hidden',
+                border: `1px solid ${border}`,
+                marginBottom: 16,
+              }}>
+                {[
+                  { icon: <TagOutlined />,           label: 'Davlat raqami',  value: car.licensePlate },
+                  { icon: <CarOutlined />,            label: 'Kategoriya',     value: car.category },
+                  { icon: <ThunderboltOutlined />,    label: "Yoqilg'i",       value: car.fuelType },
+                  { icon: <ToolOutlined />,           label: 'Transmissiya',   value: car.transmissionType },
+                  { icon: <DashboardOutlined />,      label: 'Rang',           value: car.color },
+                  { icon: <TeamOutlined />,           label: "Sig'im",         value: `${car.seatCount} o'rindiq` },
+                ].map((row, i, arr) => (
+                  <div key={row.label} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '11px 14px',
+                    background: i % 2 === 0 ? bg : bgSub,
+                    borderBottom: i < arr.length - 1 ? `1px solid ${border}` : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: textMuted, fontSize: 13 }}>
+                      <span style={{ fontSize: 14 }}>{row.icon}</span>
+                      {row.label}
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: textMain, maxWidth: '55%', textAlign: 'right' }}>
+                      {row.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Description ── */}
               {car.description && (
                 <div style={{
-                  padding: '12px 14px', borderRadius: 10,
-                  background: '#fafafa', border: '1px solid #f0f0f0',
-                  fontSize: 13, color: '#595959', lineHeight: 1.7,
-                  marginBottom: 18,
+                  padding: '12px 14px', borderRadius: 12, marginBottom: 16,
+                  background: bgSub, border: `1px solid ${border}`,
+                  fontSize: 13, color: textSub, lineHeight: 1.7,
                 }}>
-                  <div style={{ fontWeight: 600, color: '#262626', marginBottom: 4 }}>Tavsif</div>
+                  <div style={{ fontWeight: 700, color: textMain, marginBottom: 5, fontSize: 13 }}>📝 Tavsif</div>
                   {car.description}
                 </div>
               )}
 
-              {/* Features */}
+              {/* ── Features ── */}
               {features.length > 0 && (
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: '#262626', marginBottom: 8 }}>
-                    Xususiyatlar
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: textMain, marginBottom: 8 }}>
+                    ✨ Xususiyatlar
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {features.map(f => (
                       <span key={f} style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                        padding: '4px 10px', borderRadius: 20,
-                        background: 'rgba(22,119,255,0.07)',
-                        border: '1px solid rgba(22,119,255,0.2)',
-                        fontSize: 12, color: '#1677ff', fontWeight: 500,
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        padding: '4px 11px', borderRadius: 20,
+                        background: isDark ? 'rgba(22,119,255,0.12)' : '#e6f4ff',
+                        border: `1px solid ${isDark ? 'rgba(22,119,255,0.25)' : 'rgba(22,119,255,0.2)'}`,
+                        fontSize: 12, color: primary, fontWeight: 500,
                       }}>
                         <CheckCircleFilled style={{ fontSize: 10 }} />
                         {f}
@@ -298,12 +304,13 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                 </div>
               )}
 
-              <Divider style={{ margin: '14px 0' }} />
+              <Divider style={{ margin: '14px 0', borderColor: border }} />
 
-              {/* Gallery */}
+              {/* ── Gallery ── */}
               <div style={{ marginBottom: 18 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: '#262626', marginBottom: 10 }}>
-                  Rasmlar <span style={{ color: '#8c8c8c', fontWeight: 400 }}>({carImages.length})</span>
+                <div style={{ fontWeight: 700, fontSize: 13, color: textMain, marginBottom: 10 }}>
+                  🖼️ Rasmlar
+                  <span style={{ color: textMuted, fontWeight: 400, marginLeft: 5 }}>({carImages.length})</span>
                 </div>
 
                 <Image.PreviewGroup>
@@ -311,24 +318,24 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                     {carImages.map(img => (
                       <div key={img.id} style={{ position: 'relative' }}>
                         <div style={{
-                          width: 100, height: 75, borderRadius: 10, overflow: 'hidden',
-                          border: img.isMain ? '2.5px solid #1677ff' : '1.5px solid #e8e8e8',
-                          boxShadow: img.isMain ? '0 0 0 2px rgba(22,119,255,0.15)' : 'none',
+                          width: 96, height: 72, borderRadius: 10, overflow: 'hidden',
+                          border: img.isMain
+                            ? `2.5px solid ${primary}`
+                            : `1.5px solid ${border}`,
+                          boxShadow: img.isMain ? `0 0 0 3px ${isDark ? 'rgba(22,119,255,0.2)' : 'rgba(22,119,255,0.12)'}` : 'none',
                         }}>
                           <Image
-                            src={img.url}
-                            width={100}
-                            height={75}
+                            src={img.url} width={96} height={72}
                             style={{ objectFit: 'cover', display: 'block' }}
                             preview={{ mask: <span style={{ fontSize: 11 }}>Ko'rish</span> }}
                           />
                         </div>
                         {img.isMain && (
                           <span style={{
-                            position: 'absolute', top: -6, left: -6,
-                            background: '#1677ff', color: '#fff',
+                            position: 'absolute', top: -7, left: -2,
+                            background: primary, color: '#fff',
                             fontSize: 9, fontWeight: 700,
-                            padding: '2px 6px', borderRadius: 6,
+                            padding: '2px 7px', borderRadius: 6,
                           }}>
                             ASOSIY
                           </span>
@@ -340,9 +347,10 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                                 onClick={() => handleSetMain(img.id)}
                                 title="Asosiy qilish"
                                 style={{
-                                  padding: '3px 7px', borderRadius: 6, fontSize: 11,
-                                  border: '1px solid #d9d9d9', background: '#fff',
-                                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3,
+                                  padding: '3px 8px', borderRadius: 6, fontSize: 11,
+                                  border: `1px solid ${border}`,
+                                  background: bg, color: textSub,
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center',
                                 }}
                               >
                                 <StarOutlined style={{ fontSize: 10 }} />
@@ -354,9 +362,9 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                               okText="Ha" cancelText="Yo'q"
                             >
                               <button style={{
-                                padding: '3px 7px', borderRadius: 6, fontSize: 11,
-                                border: '1px solid rgba(255,77,79,0.3)',
-                                background: 'rgba(255,77,79,0.05)',
+                                padding: '3px 8px', borderRadius: 6,
+                                border: '1px solid rgba(255,77,79,0.35)',
+                                background: isDark ? 'rgba(255,77,79,0.1)' : 'rgba(255,77,79,0.05)',
                                 color: '#ff4d4f', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center',
                               }}>
@@ -368,7 +376,7 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                       </div>
                     ))}
 
-                    {/* Upload button */}
+                    {/* Upload */}
                     {canEdit && (
                       <Upload
                         accept="image/jpeg,image/png,image/webp,image/gif"
@@ -378,32 +386,18 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                         disabled={uploading}
                       >
                         <div style={{
-                          width: 100, height: 75, borderRadius: 10,
-                          border: '1.5px dashed #d9d9d9',
+                          width: 96, height: 72, borderRadius: 10,
+                          border: `1.5px dashed ${isDark ? 'rgba(255,255,255,0.2)' : '#d0d7e3'}`,
                           display: 'flex', flexDirection: 'column',
                           alignItems: 'center', justifyContent: 'center',
                           cursor: uploading ? 'not-allowed' : 'pointer',
-                          color: '#bfbfbf', fontSize: 11, gap: 4,
-                          background: '#fafafa',
+                          color: textMuted, fontSize: 11, gap: 4,
+                          background: bgSub,
                           transition: 'border-color 0.2s, color 0.2s',
-                        }}
-                          onMouseEnter={e => {
-                            if (!uploading) {
-                              (e.currentTarget as HTMLDivElement).style.borderColor = '#1677ff'
-                              ;(e.currentTarget as HTMLDivElement).style.color = '#1677ff'
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLDivElement).style.borderColor = '#d9d9d9'
-                            ;(e.currentTarget as HTMLDivElement).style.color = '#bfbfbf'
-                          }}
-                        >
+                        }}>
                           {uploading
                             ? <Spin indicator={<LoadingOutlined style={{ fontSize: 18 }} />} />
-                            : <>
-                                <PlusOutlined style={{ fontSize: 18 }} />
-                                <span>Rasm qo'shish</span>
-                              </>
+                            : <><PlusOutlined style={{ fontSize: 18 }} /><span>Qo'shish</span></>
                           }
                         </div>
                       </Upload>
@@ -412,37 +406,20 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
                 </Image.PreviewGroup>
               </div>
 
-              {/* Customer bottom actions */}
+              {/* ── Customer bottom actions ── */}
               {canRent && isAvailable && (
                 <Space direction="vertical" style={{ width: '100%' }} size={10}>
-                  <Button
-                    size="large" block
-                    icon={<CalendarOutlined />}
-                    onClick={() => setReservationModalOpen(true)}
-                  >
+                  <Button size="large" block icon={<CalendarOutlined />}
+                    onClick={() => setReservationModalOpen(true)}>
                     Bron qilish (Rezervatsiya)
                   </Button>
-                  <Button
-                    type="primary" size="large" block
-                    icon={<ShoppingCartOutlined />}
-                    onClick={() => setRentalModalOpen(true)}
-                  >
+                  <Button type="primary" size="large" block icon={<ShoppingCartOutlined />}
+                    onClick={() => setRentalModalOpen(true)}>
                     Hozir ijaraga olish
                   </Button>
                 </Space>
               )}
             </div>
-
-            {/* Admin top-right actions */}
-            {canRent && isAvailable && (
-              <div style={{
-                position: 'absolute', top: 12, right: 52,
-                display: 'flex', gap: 6,
-              }}>
-                <Button size="small" icon={<CalendarOutlined />} onClick={() => setReservationModalOpen(true)}>Bron</Button>
-                <Button size="small" type="primary" icon={<ShoppingCartOutlined />} onClick={() => setRentalModalOpen(true)}>Ijara</Button>
-              </div>
-            )}
           </div>
         )}
       </Drawer>
@@ -452,18 +429,15 @@ export default function CarDetailDrawer({ carId, onClose, onSuccess }: Props) {
           open={rentalModalOpen}
           onClose={() => setRentalModalOpen(false)}
           onSuccess={() => { setRentalModalOpen(false); onClose(); onSuccess() }}
-          prefilledCarId={car.id}
-          carLabel={carLabel}
+          prefilledCarId={car.id} carLabel={carLabel}
         />
       )}
-
       {car && (
         <ReservationFormModal
           open={reservationModalOpen}
           onClose={() => setReservationModalOpen(false)}
           onSuccess={() => { setReservationModalOpen(false); onClose(); onSuccess() }}
-          prefilledCarId={car.id}
-          carLabel={carLabel}
+          prefilledCarId={car.id} carLabel={carLabel}
         />
       )}
     </>
