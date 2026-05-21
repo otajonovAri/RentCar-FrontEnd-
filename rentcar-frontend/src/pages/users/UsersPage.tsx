@@ -9,7 +9,7 @@ import {
   CheckCircleFilled, ClockCircleFilled, AppstoreFilled,
   CalendarFilled, PhoneFilled, StopOutlined, UnlockOutlined,
   DeleteOutlined, LockOutlined, WarningFilled, ExclamationCircleOutlined,
-  CheckCircleOutlined, CloseCircleOutlined,
+  CheckCircleOutlined, CloseCircleOutlined, SendOutlined,
 } from '@ant-design/icons'
 import { format } from 'date-fns'
 import { usersApi } from '@/api/usersApi'
@@ -534,6 +534,18 @@ export default function UsersPage() {
                       <span style={{ fontSize:13, fontFamily:'monospace', color:token.colorText }}>
                         {user.phoneNumber || '—'}
                       </span>
+                    </div>
+
+                    {/* Telegram */}
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <SendOutlined style={{ color: user.telegramId ? '#229ED9' : token.colorTextQuaternary, fontSize:12, flexShrink:0 }}/>
+                      {user.telegramId ? (
+                        <span style={{ fontSize:12, color:'#229ED9', fontWeight:600 }}>
+                          {user.telegramUsername ? `@${user.telegramUsername}` : `ID: ${user.telegramId}`}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize:12, color:token.colorTextTertiary }}>Telegram ulanmagan</span>
+                      )}
                     </div>
 
                     {/* Email confirmed */}

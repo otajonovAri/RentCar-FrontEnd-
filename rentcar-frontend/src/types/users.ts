@@ -18,6 +18,9 @@ export interface UserDto {
   blockReason: string | null
   blockedAt: string | null
   blockedUntil: string | null
+  // Telegram
+  telegramId: number | null
+  telegramUsername: string | null
 }
 
 export interface UpdateProfileDto {
