@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Input, Button, Typography, Alert, Divider } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -21,12 +21,31 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const navigate   = useNavigate()
-  const setAuth    = useAuthStore((s) => s.setAuth)
-  const isDark     = useThemeStore((s) => s.isDark)
-  const [error,    setError]    = useState<string | null>(null)
-  const [loading,  setLoading]  = useState(false)
-  const [gLoading, setGLoading] = useState(false)
+  const navigate        = useNavigate()
+  const [searchParams]  = useSearchParams()
+  const setAuth         = useAuthStore((s) => s.setAuth)
+  const isDark          = useThemeStore((s) => s.isDark)
+  const [error,         setError]        = useState<string | null>(null)
+  const [deletedRedirect, setDeletedRedirect] = useState(false)
+  const [countdown,     setCountdown]    = useState(5)
+  const [loading,       setLoading]      = useState(false)
+  const [gLoading,      setGLoading]     = useState(false)
+
+  // /login?reason=deleted dan kelgan bo'lsa — avtoredirect
+  useEffect(() => {
+    if (searchParams.get('reason') === 'deleted') {
+      setDeletedRedirect(true)
+      setError("ACCOUNT_DELETED|Hisobingiz o'chirilgan.")
+    }
+  }, [searchParams])
+
+  // Countdown va auto-navigate to /register
+  useEffect(() => {
+    if (!deletedRedirect) return
+    if (countdown <= 0) { navigate('/register', { replace: true }); return }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [deletedRedirect, countdown, navigate])
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver:      zodResolver(loginSchema),
@@ -50,13 +69,20 @@ export default function LoginPage() {
   }
 
   const onSubmit = async (v: LoginForm) => {
-    setError(null); setLoading(true)
+    setError(null); setDeletedRedirect(false); setLoading(true)
     try {
       const { data } = await authApi.login(v)
       redirect(data)
     } catch (err) {
-      const e = err as AxiosError<ApiError>
-      setError(e.response?.data?.detail ?? "Email yoki parol noto'g'ri.")
+      const e    = err as AxiosError<ApiError>
+      const detail = e.response?.data?.detail ?? "Email yoki parol noto'g'ri."
+      if (detail.startsWith('ACCOUNT_DELETED|')) {
+        setDeletedRedirect(true)
+        setCountdown(5)
+        setError(detail)
+      } else {
+        setError(detail)
+      }
     } finally { setLoading(false) }
   }
 
@@ -135,7 +161,7 @@ export default function LoginPage() {
           Hisobingizga kiring
         </Text>
 
-        {error && (
+        {error && !deletedRedirect && (
           <Alert
             message={error}
             type="error"
@@ -143,6 +169,33 @@ export default function LoginPage() {
             closable
             onClose={() => setError(null)}
             style={{ marginBottom: 16, borderRadius: 8 }}
+          />
+        )}
+
+        {deletedRedirect && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16, borderRadius: 8 }}
+            message="Hisobingiz o'chirilgan"
+            description={
+              <div>
+                <p style={{ margin: '4px 0 8px' }}>
+                  Siz xuddi shu email bilan qayta ro'yxatdan o'tishingiz mumkin.
+                </p>
+                <p style={{ margin: 0, color: '#8c8c8c', fontSize: 12 }}>
+                  {countdown} soniyadan so'ng avtomatik yo'naltirilasiz...
+                </p>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => navigate('/register', { replace: true })}
+                  style={{ marginTop: 8 }}
+                >
+                  Hozir ro'yxatdan o'tish
+                </Button>
+              </div>
+            }
           />
         )}
 

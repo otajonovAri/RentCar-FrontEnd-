@@ -104,7 +104,14 @@ api.interceptors.response.use(
         // best effort
       }
 
-      window.location.href = '/login'
+      // Hisob o'chirilgan bo'lsa — /register ga, aks holda /login ga
+      const errDetail = (refreshError as { response?: { data?: { detail?: string } } })
+        ?.response?.data?.detail ?? ''
+      if (errDetail.startsWith('ACCOUNT_DELETED|')) {
+        window.location.href = '/register?reason=deleted'
+      } else {
+        window.location.href = '/login'
+      }
       return Promise.reject(refreshError)
     } finally {
       isRefreshing = false
