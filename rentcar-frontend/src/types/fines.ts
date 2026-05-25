@@ -1,4 +1,4 @@
-export type FineStatus = 'Pending' | 'Paid' | 'Cancelled'
+export type FineStatus = 'Unpaid' | 'Paid'
 
 export interface FineDto {
   id: number

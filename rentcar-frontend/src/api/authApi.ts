@@ -29,9 +29,9 @@ export const authApi = {
   login: (data: LoginDto) =>
     api.post<AuthResponseDto>('/api/auth/login', data),
 
-  /** Google Sign-In — access token backend ga yuboriladi */
-  googleLogin: (accessToken: string) =>
-    api.post<AuthResponseDto>('/api/auth/google', { accessToken }),
+  /** Google Sign-In — id token backend ga yuboriladi */
+  googleLogin: (idToken: string) =>
+    api.post<AuthResponseDto>('/api/auth/google', { idToken }),
 
   refreshToken: (data: RefreshTokenDto) =>
     api.post<AuthResponseDto>('/api/auth/refresh-token', data),

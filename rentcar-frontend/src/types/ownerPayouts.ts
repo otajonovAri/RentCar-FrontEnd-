@@ -1,4 +1,4 @@
-export type OwnerPayoutStatus = 'Pending' | 'Processing' | 'Paid' | 'Failed' | 'OnHold'
+export type OwnerPayoutStatus = 'Pending' | 'Paid' | 'Cancelled'
 
 export interface OwnerPayoutDto {
   id: number
@@ -19,8 +19,6 @@ export interface OwnerPayoutDto {
 
 export interface CreatePayoutDto {
   rentalId: number
-  ownerRevenuePercent: number
-  notes?: string | null
 }
 
 export interface MarkPaidDto {

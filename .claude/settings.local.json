@@ -3,7 +3,9 @@
     "allow": [
       "PowerShell(cd \"D:\\\\RentalCarSolution\\(FrontEnd\\)\"; npm create vite@latest rentcar-frontend -- --template react-ts 2>&1)",
       "PowerShell($env:PATH)",
-      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:APPDATA\\\\npm\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\" -ErrorAction SilentlyContinue)"
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\nodejs\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:APPDATA\\\\npm\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:LOCALAPPDATA\\\\Programs\\\\nodejs\" -ErrorAction SilentlyContinue)",
+      "Bash(git -C \"D:/RentalCarSolution\\(FrontEnd\\)\" log --oneline --all)",
+      "Bash(npx tsc *)"
     ]
   }
 }

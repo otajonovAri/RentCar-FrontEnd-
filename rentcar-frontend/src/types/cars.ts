@@ -71,7 +71,7 @@ export interface CarDetailDto {
 
 export interface CreateCarDto {
   brandId: number
-  carModelId: number
+  modelId: number
   categoryId: number
   fuelTypeId: number
   branchId: number
@@ -95,7 +95,7 @@ export interface UpdateCarDto {
 }
 
 export interface AddCarImageDto {
-  url: string
+  imageUrl: string
   isMain: boolean
   displayOrder: number
   altText?: string | null
@@ -106,9 +106,10 @@ export interface CarsFilter {
   pageSize: number
   search?: string
   brandId?: number
+  modelId?: number
   categoryId?: number
   branchId?: number
-  minDailyRate?: number
-  maxDailyRate?: number
+  minPrice?: number
+  maxPrice?: number
   status?: CarStatus
 }

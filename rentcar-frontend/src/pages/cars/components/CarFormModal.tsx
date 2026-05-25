@@ -81,7 +81,7 @@ export default function CarFormModal({ open, car, onClose, onSuccess }: Props) {
         // Yangi qo'shish — transmissionType ni integer ga aylantirish
         await carsApi.create({
           brandId:          values.brandId,
-          carModelId:       values.carModelId,
+          modelId:          values.modelId,
           categoryId:       values.categoryId,
           fuelTypeId:       values.fuelTypeId,
           branchId:         values.branchId,
@@ -142,7 +142,7 @@ export default function CarFormModal({ open, car, onClose, onSuccess }: Props) {
                     optionFilterProp="children"
                     onChange={(v: number) => {
                       setSelectedBrand(v)
-                      form.setFieldValue('carModelId', undefined)
+                      form.setFieldValue('modelId', undefined)
                     }}
                   >
                     {brands.map((b) => (
@@ -153,7 +153,7 @@ export default function CarFormModal({ open, car, onClose, onSuccess }: Props) {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  name="carModelId"
+                  name="modelId"
                   label="Model"
                   rules={[{ required: true, message: 'Modelni tanlang' }]}
                 >

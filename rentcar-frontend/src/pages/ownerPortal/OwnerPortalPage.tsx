@@ -371,20 +371,14 @@ export default function OwnerPortalPage() {
     setSaving(true)
     try {
       await carListingsApi.create({
-        ownerId:            userId,
-        brandId:            values.brandId,
-        carModelId:         values.carModelId,
-        categoryId:         values.categoryId,
-        fuelTypeId:         values.fuelTypeId,
-        branchId:           values.branchId,
-        year:               values.year,
-        licensePlate:       values.licensePlate,
-        color:              values.color,
-        seatCount:          values.seatCount,
-        mileage:            values.mileage,
-        transmissionType:   values.transmissionType,
-        requestedDailyRate: values.requestedDailyRate,
-        description:        values.description || null,
+        brandId:          values.brandId,
+        modelId:          values.modelId,
+        year:             values.year,
+        color:            values.color,
+        licensePlate:     values.licensePlate,
+        mileage:          values.mileage,
+        expectedDailyRate: values.expectedDailyRate,
+        description:      values.description || null,
       })
       message.success("✅ So'rovingiz yuborildi! Admin ko'rib chiqadi.")
       closeModal()
@@ -589,11 +583,11 @@ export default function OwnerPortalPage() {
                 options={brands.map(b => ({ value: b.id, label: b.name }))}
                 onChange={(v: number) => {
                   setSelectedBrandId(v)
-                  form.setFieldValue('carModelId', undefined)
+                  form.setFieldValue('modelId', undefined)
                 }}
               />
             </Form.Item>
-            <Form.Item name="carModelId" label="Model" rules={[{ required: true, message: 'Majburiy' }]}>
+            <Form.Item name="modelId" label="Model" rules={[{ required: true, message: 'Majburiy' }]}>
               <Select
                 showSearch
                 optionFilterProp="label"
@@ -702,7 +696,7 @@ export default function OwnerPortalPage() {
               ]} />
             </Form.Item>
             <Form.Item
-              name="requestedDailyRate"
+              name="expectedDailyRate"
               label="Talab qilinadigan kunlik narx (so'm)"
               rules={[{ required: true, message: 'Majburiy' }]}
             >

@@ -4,14 +4,14 @@ import type { PaginatedResponse } from '@/types/common'
 
 export const carModelsApi = {
   getAll: (params?: { brandId?: number; search?: string; page?: number; pageSize?: number }) =>
-    api.get<PaginatedResponse<CarModelDto>>('/api/car-models', { params }),
+    api.get<PaginatedResponse<CarModelDto>>('/api/carmodels', { params }),
 
   create: (data: CreateCarModelDto) =>
-    api.post<{ id: number }>('/api/car-models', data),
+    api.post<{ id: number }>('/api/carmodels', data),
 
   update: (id: number, name: string) =>
-    api.put<void>(`/api/car-models/${id}`, { name }),
+    api.put<void>(`/api/carmodels/${id}`, { name }),
 
   delete: (id: number) =>
-    api.delete<void>(`/api/car-models/${id}`),
+    api.delete<void>(`/api/carmodels/${id}`),
 }

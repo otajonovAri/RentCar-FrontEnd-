@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button, Popconfirm, message, theme, Spin, Grid, Pagination, Badge } from 'antd'
 import {
   PlusOutlined, CheckOutlined,
-  WarningFilled, CheckCircleFilled, StopOutlined,
+  WarningFilled, CheckCircleFilled,
   DollarCircleFilled, AppstoreFilled, CalendarFilled,
 } from '@ant-design/icons'
 import { finesApi } from '@/api/finesApi'
@@ -18,12 +18,11 @@ import { format } from 'date-fns'
 const fmt = (n: number) => n.toLocaleString('ru-RU')
 
 const STATUS_CFG: Record<FineStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  Pending:   { label: "To'lanmagan", color: '#ff4d4f', bg: 'rgba(255,77,79,0.12)',  icon: <WarningFilled      style={{ fontSize: 11 }}/> },
-  Paid:      { label: "To'langan",   color: '#52c41a', bg: 'rgba(82,196,26,0.12)',  icon: <CheckCircleFilled  style={{ fontSize: 11 }}/> },
-  Cancelled: { label: 'Bekor',       color: '#8c8c8c', bg: 'rgba(140,140,140,0.1)', icon: <StopOutlined       style={{ fontSize: 11 }}/> },
+  Unpaid: { label: "To'lanmagan", color: '#ff4d4f', bg: 'rgba(255,77,79,0.12)',  icon: <WarningFilled      style={{ fontSize: 11 }}/> },
+  Paid:   { label: "To'langan",   color: '#52c41a', bg: 'rgba(82,196,26,0.12)',  icon: <CheckCircleFilled  style={{ fontSize: 11 }}/> },
 }
 
-const STATUSES: (FineStatus | 'all')[] = ['all', 'Pending', 'Paid', 'Cancelled']
+const STATUSES: (FineStatus | 'all')[] = ['all', 'Unpaid', 'Paid']
 
 export default function FinesPage() {
   const { token }    = theme.useToken()
@@ -73,9 +72,9 @@ export default function FinesPage() {
 
   const items      = data?.items ?? []
   const total      = data?.totalCount ?? 0
-  const pendingCnt = items.filter(f => f.status === 'Pending').length
+  const pendingCnt = items.filter(f => f.status === 'Unpaid').length
   const paidCnt    = items.filter(f => f.status === 'Paid').length
-  const pendingSum = items.filter(f => f.status === 'Pending').reduce((s, f) => s + f.amount, 0)
+  const pendingSum = items.filter(f => f.status === 'Unpaid').reduce((s, f) => s + f.amount, 0)
   const cols       = isMobile ? 1 : !screens.lg ? 2 : 3
 
   return (
@@ -293,14 +292,14 @@ export default function FinesPage() {
                     style={{
                       background:    token.colorBgContainer,
                       borderRadius:  14,
-                      border:        `1.5px solid ${fine.status === 'Pending' ? 'rgba(255,77,79,0.3)' : token.colorBorderSecondary}`,
+                      border:        `1.5px solid ${fine.status === 'Unpaid' ? 'rgba(255,77,79,0.3)' : token.colorBorderSecondary}`,
                       overflow:      'hidden',
-                      boxShadow:     fine.status === 'Pending'
+                      boxShadow:     fine.status === 'Unpaid'
                         ? '0 2px 10px rgba(255,77,79,0.1)'
                         : '0 1px 6px rgba(0,0,0,0.06)',
                       display:       'flex',
                       flexDirection: 'column',
-                      opacity:       fine.status === 'Cancelled' ? 0.65 : 1,
+                      opacity:       fine.status === 'Paid' ? 0.65 : 1,
                     }}
                   >
                     <div style={{ height:3, background:cfg.color }}/>
@@ -393,7 +392,7 @@ export default function FinesPage() {
                     </div>
 
                     {/* Admin: mark-as-paid */}
-                    {isManager && fine.status === 'Pending' && (
+                    {isManager && fine.status === 'Unpaid' && (
                       <div style={{
                         padding:'8px 13px',
                         borderTop:`1px solid ${token.colorBorderSecondary}`,
@@ -419,7 +418,7 @@ export default function FinesPage() {
                     )}
 
                     {/* Customer: pay button */}
-                    {isCustomer && fine.status === 'Pending' && (
+                    {isCustomer && fine.status === 'Unpaid' && (
                       <div style={{
                         padding:'10px 13px',
                         borderTop:`1px solid rgba(255,77,79,0.15)`,
@@ -461,7 +460,7 @@ export default function FinesPage() {
                     transition:    'all 0.22s cubic-bezier(0.4,0,0.2,1)',
                     display:       'flex',
                     flexDirection: 'column',
-                    opacity:       fine.status === 'Cancelled' ? 0.65 : 1,
+                    opacity:       fine.status === 'Paid' ? 0.65 : 1,
                   }}
                 >
                   {/* Status color bar */}
@@ -583,7 +582,7 @@ export default function FinesPage() {
                   </div>
 
                   {/* Admin: mark-as-paid footer */}
-                  {isManager && fine.status === 'Pending' && (
+                  {isManager && fine.status === 'Unpaid' && (
                     <div style={{
                       padding:'10px 16px',
                       borderTop:`1px solid ${token.colorBorderSecondary}`,
@@ -611,7 +610,7 @@ export default function FinesPage() {
                   )}
 
                   {/* Client: pay fine footer */}
-                  {isCustomer && fine.status === 'Pending' && (
+                  {isCustomer && fine.status === 'Unpaid' && (
                     <div style={{
                       padding:'10px 16px',
                       borderTop:`1px solid ${token.colorBorderSecondary}`,

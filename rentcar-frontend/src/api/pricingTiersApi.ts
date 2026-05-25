@@ -3,14 +3,14 @@ import type { PricingTierDto, CreatePricingTierDto } from '@/types/pricingTiers'
 
 export const pricingTiersApi = {
   getAll: (params?: { carId?: number; categoryId?: number; activeOnly?: boolean }) =>
-    api.get<PricingTierDto[]>('/api/pricing-tiers', { params }),
+    api.get<PricingTierDto[]>('/api/pricingtiers', { params }),
 
   create: (data: CreatePricingTierDto) =>
-    api.post<{ id: number }>('/api/pricing-tiers', data),
+    api.post<{ id: number }>('/api/pricingtiers', data),
 
   update: (id: number, data: Partial<CreatePricingTierDto>) =>
-    api.put<void>(`/api/pricing-tiers/${id}`, data),
+    api.put<void>(`/api/pricingtiers/${id}`, data),
 
   delete: (id: number) =>
-    api.delete<void>(`/api/pricing-tiers/${id}`),
+    api.delete<void>(`/api/pricingtiers/${id}`),
 }

@@ -280,7 +280,7 @@ export default function DashboardPage() {
       })))
     )
     reqs.push(
-      finesApi.getAll({ page:1, pageSize:1, status:'Pending' })
+      finesApi.getAll({ page:1, pageSize:1, status:'Unpaid' })
         .then(r => setStats(p => ({ ...p, pendingFines: r.data.totalCount })))
         .catch(() => {})
     )

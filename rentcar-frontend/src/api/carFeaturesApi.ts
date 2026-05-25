@@ -3,14 +3,14 @@ import type { LookupItem } from '@/types/lookups'
 
 export const carFeaturesApi = {
   getAll: () =>
-    api.get<LookupItem[]>('/api/car-features'),
+    api.get<LookupItem[]>('/api/carfeatures'),
 
   create: (name: string) =>
-    api.post<{ id: number }>('/api/car-features', { name }),
+    api.post<{ id: number }>('/api/carfeatures', { name }),
 
   update: (id: number, name: string) =>
-    api.put<void>(`/api/car-features/${id}`, { id, name }),
+    api.put<void>(`/api/carfeatures/${id}`, { id, name }),
 
   delete: (id: number) =>
-    api.delete<void>(`/api/car-features/${id}`),
+    api.delete<void>(`/api/carfeatures/${id}`),
 }

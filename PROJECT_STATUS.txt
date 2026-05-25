@@ -1,0 +1,508 @@
+================================================================================
+  RENTAL CAR FRONTEND — LOYIHA HOLATI HISOBOTI
+  Tahlil sanasi: 2026-05-25
+  Yangilandi: 2026-05-25 (Yangi Backend API Hujjati asosida)
+  Deadline: 2026-06-15
+================================================================================
+
+================================================================================
+  🔴 KRITIK XATOLAR — API NOMUVOFIQLIKLAR (DARHOL TUZATISH KERAK!)
+================================================================================
+
+  Bu xatolar backend bilan muloqotni to'sib qo'yishi mumkin.
+  Backend yangi hujjatida API path va maydon nomlari o'zgardi.
+
+────────────────────────────────────────────────────────────────────────────────
+  A. API URL PATH NOMUVOFIQLIKLARL
+────────────────────────────────────────────────────────────────────────────────
+
+  # | Modul                | Frontend (hozir)        | Yangi API (to'g'ri)
+  ──┼──────────────────────┼─────────────────────────┼─────────────────────────
+  1 | damageReportsApi     | /api/damage-reports      | /api/damagereports
+  2 | carModelsApi         | /api/car-models          | /api/carmodels
+  3 | carFeaturesApi       | /api/car-features        | /api/carfeatures
+  4 | pricingTiersApi      | /api/pricing-tiers       | /api/pricingtiers
+  5 | ownerPayoutsApi      | /api/owner-payouts       | /api/ownerpayouts
+  6 | carListingsApi       | /api/car-listings        | /api/carlistings
+
+  Fayllar:
+    rentcar-frontend/src/api/damageReportsApi.ts   → yo'lni o'zgartir
+    rentcar-frontend/src/api/carModelsApi.ts       → yo'lni o'zgartir
+    rentcar-frontend/src/api/carFeaturesApi.ts     → yo'lni o'zgartir
+    rentcar-frontend/src/api/pricingTiersApi.ts    → yo'lni o'zgartir
+    rentcar-frontend/src/api/ownerPayoutsApi.ts    → yo'lni o'zgartir
+    rentcar-frontend/src/api/carListingsApi.ts     → yo'lni o'zgartir
+
+────────────────────────────────────────────────────────────────────────────────
+  B. REQUEST BODY MAYDON NOMLARI NOMUVOFIQLIKLARLI
+────────────────────────────────────────────────────────────────────────────────
+
+  1. MASHINA YARATISH — POST /api/cars
+     ❌ Hozir:   CreateCarDto.carModelId = 5
+     ✅ To'g'ri:  { "modelId": 5 }
+     Fayl: src/types/cars.ts  →  carModelId → modelId
+
+  2. MASHINA RASM QO'SHISH — POST /api/cars/{id}/images
+     ❌ Hozir:   AddCarImageDto { url, isMain, displayOrder, altText }
+     ✅ To'g'ri:  { "imageUrl": "https://...", "isMain": false }
+     Fayl: src/types/cars.ts  →  url → imageUrl, displayOrder/altText olib tashlash
+
+  3. CARS FILTER — GET /api/cars
+     ❌ Hozir:   CarsFilter.minDailyRate, maxDailyRate
+     ✅ To'g'ri:  minPrice, maxPrice
+     Fayl: src/types/cars.ts  →  maydon nomlarini o'zgartir
+
+  4. CARS FILTER — modelId etishmayapti
+     ❌ Hozir:   CarsFilter'da modelId yo'q
+     ✅ To'g'ri:  ?modelId=2 filtri qo'shish
+     Fayl: src/types/cars.ts  →  modelId?: number qo'shish
+
+  5. OWNER PAYOUT YARATISH — POST /api/ownerpayouts
+     ❌ Hozir:   CreatePayoutDto { rentalId, ownerRevenuePercent, notes }
+     ✅ To'g'ri:  { "rentalId": 99 }  (ownerRevenuePercent backend tomonidan hisoblanadi)
+     Fayl: src/types/ownerPayouts.ts  →  CreatePayoutDto soddalashtirish
+
+  6. GOOGLE LOGIN — POST /api/auth/google
+     ❌ Hozir:   authApi.googleLogin → { "accessToken": "..." }
+     ✅ To'g'ri:  { "idToken": "Google ID token" }
+     Fayl: src/api/authApi.ts  →  accessToken → idToken
+
+  7. JARIMA STATUS — FineStatus type
+     ❌ Hozir:   type FineStatus = 'Pending' | 'Paid' | 'Cancelled'
+     ✅ To'g'ri:  'Unpaid' | 'Paid'
+     Fayl: src/types/fines.ts  →  FineStatus type o'zgartirish
+     ⚠️  Bu o'zgartirish bilan FinesPage status filterini ham yangilash kerak!
+
+  8. OWNER PAYOUT STATUS — OwnerPayoutStatus type
+     ❌ Hozir:   'Pending' | 'Processing' | 'Paid' | 'Failed' | 'OnHold'
+     ✅ To'g'ri:  'Pending' | 'Paid' | 'Cancelled'
+     Fayl: src/types/ownerPayouts.ts  →  OwnerPayoutStatus o'zgartirish
+
+────────────────────────────────────────────────────────────────────────────────
+  C. CAR LISTING YARATISH FORMATI FARQ QILADI
+────────────────────────────────────────────────────────────────────────────────
+
+  ❌ Hozir CreateCarListingDto:
+     { ownerId, brandId, carModelId, categoryId, fuelTypeId, branchId,
+       year, licensePlate, color, seatCount, mileage, transmissionType,
+       requestedDailyRate, description }
+
+  ✅ Yangi API CreateCarListingDto:
+     { brandId, modelId, year, color, licensePlate, mileage,
+       description, imageUrls, expectedDailyRate }
+     ⚠️ ownerId, categoryId, fuelTypeId, branchId, seatCount, transmissionType
+        YO'Q! Backend JWT dan ownerId oladi.
+
+  Fayl: src/types/carListings.ts + OwnerPortalPage.tsx formulasini tekshirish
+
+
+================================================================================
+  ✅ QILINGAN ISHLAR (CONFIRMED DONE — Yangi API Hujjati asosida)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  1. AUTENTIFIKATSIYA TIZIMI — BARCHA QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] POST /api/auth/register              — ishlamoqda
+  [✅] POST /api/auth/confirm-email         — OTP tasdiqlash
+  [✅] POST /api/auth/resend-confirmation   — qayta yuborish
+  [✅] POST /api/auth/login                 — ishlamoqda
+  [✅] POST /api/auth/refresh-token         — axiosInstance interceptor
+  [✅] POST /api/auth/logout                — authApi.logout() mavjud
+  [✅] GET  /api/auth/me                    — ishlamoqda
+  [✅] POST /api/auth/google                — Google OAuth (⚠️ idToken → accessToken bug)
+  [✅] Telegram OTP oqimi UI               — ishlamoqda
+
+────────────────────────────────────────────────────────────────────────────────
+  2. FOYDALANUVCHILAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/users                      — ro'yxat, qidiruv, rol filter, isBlocked filter
+  [✅] GET  /api/users/{id}                 — batafsil
+  [✅] PUT  /api/users/{id}/profile         — profil yangilash
+  [✅] PUT  /api/users/{id}/license         — guvohnoma yangilash
+  [✅] PATCH /api/users/{id}/role           — rol o'zgartirish (UserRoleModal)
+  [✅] PATCH /api/users/{id}/block          — bloklash (SuperAdmin, UsersPage)
+  [✅] PATCH /api/users/{id}/unblock        — razblok (SuperAdmin, UsersPage)
+  [✅] DELETE /api/users/{id}               — o'chirish (SuperAdmin, UsersPage)
+  [✅] GET  /api/users/my-status            — blok holatini tekshirish (usersApi)
+  [✅] GET  /api/users/deletion-eligibility — hisob o'chirish eligibility
+  [✅] POST /api/users/request-deletion     — o'chirish so'rovi
+  [✅] GET  /api/users/{id}/full-history    — to'liq tarix (ProfilePage, MyActivityPage)
+  [✅] GET  /api/users/deletion-requests    — admin uchun o'chirish so'rovlari ro'yxati
+  [✅] PATCH /api/users/{id}/approve-deletion — tasdiqlash
+  [✅] PATCH /api/users/{id}/reject-deletion  — rad etish
+  [✅] UserDto — barcha yangi maydonlar: isBlocked, telegramId, telegramUsername
+
+────────────────────────────────────────────────────────────────────────────────
+  3. MASHINALAR — ASOSAN QILINGAN (ba'zi buglar bor)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/cars                       — ro'yxat, filterlar (qisman)
+  [✅] GET  /api/cars/{id}                  — batafsil (CarDetailDrawer)
+  [✅] POST /api/cars                       — yaratish (⚠️ carModelId → modelId bug)
+  [✅] PUT  /api/cars/{id}                  — yangilash
+  [✅] DELETE /api/cars/{id}               — o'chirish
+  [✅] GET  /api/cars/{id}/images           — rasmlar ro'yxati
+  [✅] POST /api/cars/{id}/images           — rasm qo'shish (⚠️ url → imageUrl bug)
+  [✅] PATCH /api/cars/{id}/images/{id}/set-main — asosiy rasm
+  [✅] DELETE /api/cars/{id}/images/{id}    — rasm o'chirish
+  [❌] POST /api/cars/images/batch          — batch rasmlar (API'da bor, frontend yo'q)
+
+────────────────────────────────────────────────────────────────────────────────
+  4. IJARALAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/rentals                    — ro'yxat (status, carId filter)
+  [✅] GET  /api/rentals/{id}               — batafsil (RentalDetailDrawer)
+  [✅] POST /api/rentals                    — yaratish (userId yuborilmaydi ✓)
+  [✅] PATCH /api/rentals/{id}/activate     — faollashtirish
+  [✅] PATCH /api/rentals/{id}/complete     — yakunlash (actualReturnDate bilan)
+  [✅] PATCH /api/rentals/{id}/cancel       — bekor qilish (reason bilan)
+
+────────────────────────────────────────────────────────────────────────────────
+  5. REZERVATSIYALAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/reservations               — ro'yxat, filter
+  [✅] POST /api/reservations               — yaratish
+  [✅] PATCH /api/reservations/{id}/cancel  — bekor qilish
+
+────────────────────────────────────────────────────────────────────────────────
+  6. TO'LOVLAR — API QATLAMI QILINGAN, UI YO'Q
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/payments/by-rental/{id}    — paymentsApi.getByRental()
+  [✅] POST /api/payments                   — paymentsApi.create()
+  [✅] PUT  /api/payments/{id}/approve      — paymentsApi.approve() [Manager+]
+  [✅] GET  /api/payments/pending           — paymentsApi.getPending() [Manager+]
+  [❌] /payments SAHIFASI                  — hali yo'q! RentalsPage placeholder
+
+────────────────────────────────────────────────────────────────────────────────
+  7. JARIMALAR — QILINGAN (⚠️ Status bug)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/fines                      — ro'yxat
+  [✅] POST /api/fines                      — yaratish
+  [✅] PATCH /api/fines/{id}/pay            — to'langan belgilash
+  [⚠️] FineStatus type: 'Pending'|'Paid'|'Cancelled' → 'Unpaid'|'Paid' bo'lishi kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  8. TEXNIK KO'RIKLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/inspections               — ro'yxat, filter
+  [✅] POST /api/inspections               — yaratish (InspectionFormModal)
+
+────────────────────────────────────────────────────────────────────────────────
+  9. ZARAR HISOBOTLARI — QILINGAN (⚠️ Path bug)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/damagereports             — ro'yxat
+  [✅] POST /api/damagereports             — yaratish
+  [✅] PATCH /api/damagereports/{id}       — status yangilash
+  [⚠️] API path: /api/damage-reports → /api/damagereports kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  10. TEXNIK XIZMAT — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/maintenance               — ro'yxat, filter
+  [✅] POST /api/maintenance               — yaratish
+  [✅] PATCH /api/maintenance/{id}/complete — yakunlash
+
+────────────────────────────────────────────────────────────────────────────────
+  11. HISOB-FAKTURALAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/invoices/by-rental/{id}   — faktura qidirish
+  [✅] POST /api/invoices                  — faktura yaratish
+
+────────────────────────────────────────────────────────────────────────────────
+  12. SUG'URTA — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/insurance/companies       — kompaniyalar
+  [✅] POST /api/insurance/companies       — kompaniya yaratish
+  [✅] GET  /api/insurance/policies        — polislar
+  [✅] POST /api/insurance/policies        — polis yaratish
+
+────────────────────────────────────────────────────────────────────────────────
+  13. BILDIRISHNOMALAR — TO'LIQ QILINGAN (polling ham bor!)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/notifications             — ro'yxat (unreadOnly filter)
+  [✅] PATCH /api/notifications/{id}/read  — bitta o'qilgan
+  [✅] PATCH /api/notifications/read-all   — hammasi o'qilgan
+  [✅] AppHeader — 15 sekundda bir marta yangilanadi (polling)
+  [✅] Header badge — o'qilmagan soni ko'rsatiladi (totalUnread = msgs + notifs)
+
+────────────────────────────────────────────────────────────────────────────────
+  14. SUHBATLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/conversations             — ro'yxat
+  [✅] POST /api/conversations             — yangi suhbat
+  [✅] GET  /api/conversations/{id}/messages — xabarlar
+  [✅] POST /api/conversations/{id}/messages — xabar yuborish
+  [✅] PATCH /api/conversations/{id}/close — yopish
+  [✅] PATCH /api/conversations/{id}/read  — o'qilgan (conversationsApi.markRead)
+  [✅] GET  /api/conversations/unread-count — AppHeader badge uchun
+
+────────────────────────────────────────────────────────────────────────────────
+  15. FILIALLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/branches                  — ro'yxat
+  [✅] GET  /api/branches/{id}             — batafsil
+  [✅] POST /api/branches                  — yaratish
+  [✅] PUT  /api/branches/{id}             — yangilash
+
+────────────────────────────────────────────────────────────────────────────────
+  16. BRENDLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/brands                    — ro'yxat
+  [✅] POST /api/brands                    — yaratish
+  [✅] PUT  /api/brands/{id}               — yangilash
+  [✅] DELETE /api/brands/{id}             — o'chirish
+
+────────────────────────────────────────────────────────────────────────────────
+  17. MODELLAR — QILINGAN (⚠️ Path bug)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/carmodels                 — ro'yxat (brandId filter)
+  [✅] POST /api/carmodels                 — yaratish
+  [✅] PUT  /api/carmodels/{id}            — yangilash
+  [✅] DELETE /api/carmodels/{id}          — o'chirish
+  [⚠️] API path: /api/car-models → /api/carmodels kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  18. XUSUSIYATLAR — QILINGAN (⚠️ Path bug)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/carfeatures               — ro'yxat
+  [✅] POST /api/carfeatures               — yaratish
+  [✅] PUT  /api/carfeatures/{id}          — yangilash
+  [✅] DELETE /api/carfeatures/{id}        — o'chirish
+  [⚠️] API path: /api/car-features → /api/carfeatures kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  19. NARXLAR JADVALI — QILINGAN (⚠️ Path bug)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/pricingtiers              — ro'yxat
+  [✅] POST /api/pricingtiers              — yaratish
+  [✅] PUT  /api/pricingtiers/{id}         — yangilash
+  [✅] DELETE /api/pricingtiers/{id}       — o'chirish
+  [⚠️] API path: /api/pricing-tiers → /api/pricingtiers kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  20. PROMOKODLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/promotions                — ro'yxat
+  [✅] GET  /api/promotions/validate/{code} — tekshirish
+  [✅] POST /api/promotions                — yaratish
+  [✅] PUT  /api/promotions/{id}           — yangilash
+  [✅] DELETE /api/promotions/{id}         — o'chirish
+
+────────────────────────────────────────────────────────────────────────────────
+  21. OWNERLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/owners                    — ro'yxat (qidiruv, isVerified filter)
+  [✅] GET  /api/owners/{id}               — batafsil
+  [✅] POST /api/owners                    — yaratish
+  [✅] PUT  /api/owners/{id}               — yangilash
+  [✅] POST /api/owners/{id}/verify        — tasdiqlash
+
+────────────────────────────────────────────────────────────────────────────────
+  22. OWNER SHARTNOMALAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/owner-contracts           — ro'yxat
+  [✅] GET  /api/owner-contracts/{id}      — batafsil
+  [✅] POST /api/owner-contracts           — yaratish
+  [✅] PUT  /api/owner-contracts/{id}      — yangilash
+  [✅] PATCH /api/owner-contracts/{id}/status — status o'zgartirish
+
+────────────────────────────────────────────────────────────────────────────────
+  23. OWNER TO'LOVLARI — QILINGAN (⚠️ Path + Status + Body bugs)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/ownerpayouts              — ro'yxat
+  [✅] POST /api/ownerpayouts              — yaratish (⚠️ ownerRevenuePercent keraksiz)
+  [✅] PATCH /api/ownerpayouts/{id}/mark-paid — to'langan belgilash
+  [⚠️] API path: /api/owner-payouts → /api/ownerpayouts kerak
+  [⚠️] OwnerPayoutStatus: Processing|Failed|OnHold yo'q, Cancelled qo'shish kerak
+
+────────────────────────────────────────────────────────────────────────────────
+  24. MASHINA SO'ROVLARI — QILINGAN (⚠️ Path + Body bugs)
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET  /api/carlistings               — ro'yxat
+  [✅] POST /api/carlistings               — yaratish (⚠️ body formati farq qiladi)
+  [✅] PATCH /api/carlistings/{id}/approve — tasdiqlash
+  [✅] PATCH /api/carlistings/{id}/reject  — rad etish
+  [⚠️] API path: /api/car-listings → /api/carlistings kerak
+  [⚠️] CreateCarListingDto formati farqli (carModelId→modelId, ownerId yoki yo'q)
+
+────────────────────────────────────────────────────────────────────────────────
+  25. VILOYATLAR / SHAHARLAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET|POST|PUT|DELETE /api/region     — regionsApi (/api/region ishlatmoqda ✓)
+  [✅] GET|POST|PUT|DELETE /api/cities     — citiesApi
+
+────────────────────────────────────────────────────────────────────────────────
+  26. HAYDOVCHILAR — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] GET|GET(id)|POST|PUT /api/drivers   — hammasi qilingan
+
+────────────────────────────────────────────────────────────────────────────────
+  27. RASM YUKLASH — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] POST /api/upload?folder=cars        — uploadImage() funksiyasi
+  [✅] DELETE /api/upload?publicId=...     — deleteImage() funksiyasi
+  [✅] Ruxsat etilgan papkalar: cars|avatars|licenses|drivers|damages|brands|uploads
+
+────────────────────────────────────────────────────────────────────────────────
+  28. LOOKUPS — TO'LIQ QILINGAN
+────────────────────────────────────────────────────────────────────────────────
+  [✅] /api/lookups/brands                 — useLookups hook
+  [✅] /api/lookups/models?brandId=X       — useLookups hook
+  [✅] /api/lookups/categories             — useLookups hook
+  [✅] /api/lookups/fuel-types             — useLookups hook
+  [✅] /api/lookups/car-features           — useLookups hook
+  [✅] /api/lookups/regions               — useLookups hook
+  [✅] /api/lookups/cities?regionId=X      — useLookups hook
+  [✅] /api/lookups/rental-addons          — useLookups hook
+
+
+================================================================================
+  ❌ HALI QILINMAGAN FUNKSIYALAR (TODO)
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+  MUHIM (HIGH PRIORITY)
+────────────────────────────────────────────────────────────────────────────────
+
+  [❌] 1. TO'LOVLAR SAHIFASI (/payments)
+        - API qatlami to'liq tayyor (paymentsApi: getByRental, create, approve, getPending)
+        - Faqat UI sahifasi yozilmagan
+        - Kerak:
+          * Pending to'lovlar ro'yxati (Manager+)
+          * To'lovni tasdiqlash (approve) → ijara Active bo'ladi
+          * Ijara bo'yicha to'lov ko'rish (by-rental)
+          * To'lov qo'shish (Cash/Card/Transfer)
+
+  [❌] 2. PAROL O'ZGARTIRISH — ProfilePage'da yo'q
+        - API endpointi yangi hujjatda ko'rsatilmagan
+          (backendchi bilan: PUT /api/users/{id}/password bo'lishi kerak)
+        - Kerak: eski parol + yangi parol + tasdiqlash forma
+
+  [❌] 3. PAROL UNUTILGAN / TIKLASH
+        - LoginPage'da "Parolni unutdim?" havolasi yo'q
+        - API endpointlari yangi hujjatda ko'rsatilmagan
+          (backendchi bilan: POST /api/auth/forgot-password aniqlash)
+
+  [❌] 4. KATALOG KENGAYTIRILGAN FILTRI
+        - Hozir faqat kategoriya va qidiruv ishlaydi
+        - Yangi API tasdiqlaydiki minPrice/maxPrice bor
+        - Kerak:
+          * Brend filtri (brandId)
+          * Model filtri (modelId)
+          * Narx oralig'i (minPrice, maxPrice)
+          * Transmissiya filtri
+
+  [❌] 5. KATALOG PAGINATION
+        - Hozir pageSize: 100 hardcode, hammasi bir vaqtda yuklanadi
+        - Kerak: "Ko'proq yuklash" tugmasi yoki real pagination
+
+────────────────────────────────────────────────────────────────────────────────
+  O'RTA MUHIMLIK (MEDIUM PRIORITY)
+────────────────────────────────────────────────────────────────────────────────
+
+  [❌] 6. MASHINA RASMLARI GALLERY UI
+        - GET/POST/PATCH/DELETE /api/cars/{id}/images — API funksiyalar mavjud
+        - Lekin CarsPage'da rasm boshqarish UI to'liq emas
+        - Kerak: CarDetailDrawer yoki alohida panel'da rasm gallery
+
+  [❌] 7. INVOICE PDF EKSPORT
+        - Fakturani PDF sifatida yuklash imkoni yo'q
+        - Kerak: react-to-pdf yoki window.print() bilan
+
+  [❌] 8. STATISTIKA / HISOBOT SAHIFASI
+        - Dashboard'da faqat raqamlar bor, grafik yo'q
+        - Kerak: Oylik daromad, ijaralar soni, mashina band/bo'sh grafiklari
+
+  [❌] 9. OWNER PORTAL KENGAYTIRISH
+        - Hozir: mashinalari + listing so'rovlari
+        - Yetishmayapti:
+          * O'z mashinalarida faol ijaralar
+          * O'z mashinalarida owner payouts
+          * O'z mashinalarida shartnoma tafsiloti
+
+  [❌] 10. GUEST LAYOUT DARK MODE TOGGLE
+        - Catalog va CarDetail sahifalarida (login qilmagan holat) tema toggle yo'q
+
+────────────────────────────────────────────────────────────────────────────────
+  PAST MUHIMLIK (LOW PRIORITY)
+────────────────────────────────────────────────────────────────────────────────
+
+  [❌] 11. CSV/EXCEL EKSPORT — Ro'yxatlarni eksport qilish
+  [❌] 12. GLOBAL QIDIRUV — Header'da umumiy qidiruv
+  [❌] 13. PRINT VIEW — Ijara/shartnoma chop etish
+  [❌] 14. BATCH ACTIONS — Bir nechta elementni tanlab amal bajarish
+  [❌] 15. MASHINA RASMLARI BATCH — POST /api/cars/images/batch (API bor, UI yo'q)
+  [❌] 16. AVATAR CROP — Rasm yuklashda crop qilish
+
+
+================================================================================
+  🔧 TUZATISH REJALARI — USTUVORLIK BO'YICHA
+================================================================================
+
+  BIRINCHI NAVBAT — API Bug fixlar (1-2 kun):
+  ─────────────────────────────────────────────
+  1. damageReportsApi.ts   → /api/damage-reports  ➔  /api/damagereports
+  2. carModelsApi.ts       → /api/car-models       ➔  /api/carmodels
+  3. carFeaturesApi.ts     → /api/car-features     ➔  /api/carfeatures
+  4. pricingTiersApi.ts    → /api/pricing-tiers    ➔  /api/pricingtiers
+  5. ownerPayoutsApi.ts    → /api/owner-payouts    ➔  /api/ownerpayouts
+  6. carListingsApi.ts     → /api/car-listings     ➔  /api/carlistings
+  7. types/cars.ts         → carModelId ➔ modelId (CreateCarDto)
+  8. types/cars.ts         → AddCarImageDto: url ➔ imageUrl
+  9. types/cars.ts         → CarsFilter: minDailyRate/maxDailyRate ➔ minPrice/maxPrice
+  10. types/cars.ts        → CarsFilter: modelId?: number qo'shish
+  11. types/fines.ts       → FineStatus: 'Pending'|'Cancelled' olib, 'Unpaid' qo'shish
+  12. types/ownerPayouts.ts → OwnerPayoutStatus: Processing|Failed|OnHold ➔ Cancelled
+  13. types/ownerPayouts.ts → CreatePayoutDto: ownerRevenuePercent olib tashlash
+  14. api/authApi.ts       → googleLogin: accessToken ➔ idToken
+
+  IKKINCHI NAVBAT — Yangi funksiyalar (3-5 kun):
+  ───────────────────────────────────────────────
+  15. PaymentsPage yaratish (/payments)
+  16. Katalog kengaytirilgan filtr panel
+  17. Katalog pagination (pageSize 100 → real pagination)
+
+  UCHINCHI NAVBAT — Qo'shimcha funksiyalar (6-10 kun):
+  ─────────────────────────────────────────────────────
+  18. Invoice PDF eksport
+  19. Owner Portal kengaytirish
+  20. Statistika grafiklari
+  21. Parol o'zgartirish (backendchi bilan endpoint aniqlash)
+
+================================================================================
+  📊 YANGILANGAN STATISTIKA
+================================================================================
+
+  JAMI API ENDPOINTLARI (Yangi Hujjat):    ~70+ endpoint
+  QILINGAN API INTEGRATSIYALAR:             ~65+ endpoint  (≈ 93%)
+  KRITIK BUGLAR (API path/maydon):          14 ta
+  QILINMAGAN SAHIFALAR:                     1 (PaymentsPage)
+  QILINMAGAN MUHIM FUNKSIYALAR:             9 ta
+
+  Jami sahifalar:         ~35 sahifa
+  Qilingan:               ~34 sahifa  (97% sahifalar)
+  API buglar tuzatilmasa: ~8 modul ishlamaydi!
+
+================================================================================
+  📅 VAQT REJASI — Qolgan 21 kun (Deadline: 2026-06-15)
+================================================================================
+
+  Hafta 1 (2026-05-26 → 2026-06-01):
+    ① Bug fix: 14 ta API path/maydon xatosi → 1-2 kun
+    ② PaymentsPage yaratish               → 2-3 kun
+    ③ Katalog kengaytirilgan filtr         → 1 kun
+
+  Hafta 2 (2026-06-02 → 2026-06-08):
+    ④ Katalog pagination                  → 1 kun
+    ⑤ Invoice PDF                         → 1 kun
+    ⑥ Owner Portal kengaytirish           → 2 kun
+    ⑦ Parol o'zgartirish                  → 1 kun
+
+  Hafta 3 (2026-06-09 → 2026-06-14):
+    ⑧ Statistika grafiklari               → 2 kun
+    ⑨ Guest Layout dark mode              → 0.5 kun
+    ⑩ Test + bug fix + final polish       → 2-3 kun
+
+================================================================================
+  END OF REPORT
+================================================================================

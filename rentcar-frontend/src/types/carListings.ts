@@ -19,20 +19,15 @@ export interface CarListingDto {
 }
 
 export interface CreateCarListingDto {
-  ownerId: number
   brandId: number
-  carModelId: number
-  categoryId: number
-  fuelTypeId: number
-  branchId?: number | null
+  modelId: number
   year: number
-  licensePlate: string
   color: string
-  seatCount: number
+  licensePlate: string
   mileage: number
-  transmissionType: string
-  requestedDailyRate: number
   description?: string | null
+  imageUrls?: string[]
+  expectedDailyRate: number
 }
 
 export interface ApproveListingDto {

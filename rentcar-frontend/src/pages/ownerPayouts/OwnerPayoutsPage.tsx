@@ -7,8 +7,8 @@ import {
   PlusOutlined, CheckOutlined, WalletFilled,
   CarFilled, FileTextOutlined,
   DollarCircleFilled, PercentageOutlined, CalendarOutlined,
-  ClockCircleFilled, SyncOutlined, CheckCircleFilled,
-  CloseCircleFilled, PauseCircleFilled, BankOutlined,
+  ClockCircleFilled, CheckCircleFilled,
+  CloseCircleFilled, BankOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
 import { ownerPayoutsApi } from '@/api/ownerPayoutsApi'
@@ -26,11 +26,9 @@ const fmt = (n: number) => n.toLocaleString('ru-RU')
 const STATUS_CFG: Record<OwnerPayoutStatus, {
   label: string; color: string; bg: string; border: string; icon: React.ReactNode
 }> = {
-  Pending:    { label: 'Kutilmoqda',  color: '#fa8c16', bg: 'rgba(250,140,22,0.1)',  border: 'rgba(250,140,22,0.25)',  icon: <ClockCircleFilled  style={{ fontSize: 11 }}/> },
-  Processing: { label: 'Jarayonda',   color: '#1677ff', bg: 'rgba(22,119,255,0.1)',  border: 'rgba(22,119,255,0.25)',  icon: <SyncOutlined       style={{ fontSize: 11 }}/> },
-  Paid:       { label: "To'landi",    color: '#52c41a', bg: 'rgba(82,196,26,0.1)',   border: 'rgba(82,196,26,0.25)',   icon: <CheckCircleFilled  style={{ fontSize: 11 }}/> },
-  Failed:     { label: 'Xatolik',     color: '#f5222d', bg: 'rgba(245,34,45,0.1)',   border: 'rgba(245,34,45,0.25)',   icon: <CloseCircleFilled  style={{ fontSize: 11 }}/> },
-  OnHold:     { label: 'Kutishda',    color: '#722ed1', bg: 'rgba(114,46,209,0.1)',  border: 'rgba(114,46,209,0.25)',  icon: <PauseCircleFilled  style={{ fontSize: 11 }}/> },
+  Pending:   { label: 'Kutilmoqda', color: '#fa8c16', bg: 'rgba(250,140,22,0.1)',  border: 'rgba(250,140,22,0.25)',  icon: <ClockCircleFilled style={{ fontSize: 11 }}/> },
+  Paid:      { label: "To'landi",   color: '#52c41a', bg: 'rgba(82,196,26,0.1)',   border: 'rgba(82,196,26,0.25)',   icon: <CheckCircleFilled style={{ fontSize: 11 }}/> },
+  Cancelled: { label: 'Bekor',      color: '#8c8c8c', bg: 'rgba(140,140,140,0.1)', border: 'rgba(140,140,140,0.25)', icon: <CloseCircleFilled style={{ fontSize: 11 }}/> },
 }
 
 const OWNER_PALETTE = [
@@ -113,7 +111,7 @@ export default function OwnerPayoutsPage() {
     const values = await createForm.validateFields()
     setActionLoading(true)
     try {
-      await ownerPayoutsApi.create(values)
+      await ownerPayoutsApi.create({ rentalId: values.rentalId })
       message.success("✅ To'lov yaratildi")
       setCreateOpen(false)
       fetchData()
@@ -139,12 +137,10 @@ export default function OwnerPayoutsPage() {
   const totalCount = data?.totalCount ?? 0
 
   const FILTER_TABS: { key: OwnerPayoutStatus | 'All'; label: string; icon: React.ReactNode; color: string }[] = [
-    { key: 'All',        label: 'Barchasi',  icon: <WalletFilled/>,        color: '#722ed1' },
-    { key: 'Pending',    label: 'Kutilmoqda', icon: <ClockCircleFilled/>,  color: '#fa8c16' },
-    { key: 'Processing', label: 'Jarayonda',  icon: <SyncOutlined/>,       color: '#1677ff' },
-    { key: 'Paid',       label: "To'landi",   icon: <CheckCircleFilled/>,  color: '#52c41a' },
-    { key: 'Failed',     label: 'Xatolik',    icon: <CloseCircleFilled/>,  color: '#f5222d' },
-    { key: 'OnHold',     label: 'Kutishda',   icon: <PauseCircleFilled/>,  color: '#722ed1' },
+    { key: 'All',       label: 'Barchasi',  icon: <WalletFilled/>,       color: '#722ed1' },
+    { key: 'Pending',   label: 'Kutilmoqda', icon: <ClockCircleFilled/>, color: '#fa8c16' },
+    { key: 'Paid',      label: "To'landi",   icon: <CheckCircleFilled/>, color: '#52c41a' },
+    { key: 'Cancelled', label: 'Bekor',      icon: <CloseCircleFilled/>, color: '#8c8c8c' },
   ]
 
   return (
@@ -199,7 +195,7 @@ export default function OwnerPayoutsPage() {
               <div style={{ display: 'flex', gap: 10 }}>
                 {[
                   { val: totalCount, label: statusFilter === 'All' ? 'Jami' : STATUS_CFG[statusFilter as OwnerPayoutStatus]?.label, color: '#d3adf7' },
-                  { val: data?.items.filter(i => i.status === 'Pending' || i.status === 'Processing').length ?? 0, label: 'Kutilmoqda', color: '#ffd591' },
+                  { val: data?.items.filter(i => i.status === 'Pending').length ?? 0, label: 'Kutilmoqda', color: '#ffd591' },
                 ].map((s, i) => (
                   <div key={i} style={{
                     padding: '8px 18px', borderRadius: 12, textAlign: 'center',
@@ -424,27 +420,6 @@ export default function OwnerPayoutsPage() {
               }}
             />
           </Form.Item>
-          <Form.Item
-            name="ownerRevenuePercent"
-            label={<span style={{ fontWeight: 600 }}>📊 Owner ulushi (%)</span>}
-            rules={[{ required: true, message: 'Majburiy' }]}
-            initialValue={70}
-          >
-            <InputNumber
-              min={1} max={100} step={5}
-              style={{ width: '100%', borderRadius: 8 }}
-              size="large" addonAfter="%"
-            />
-          </Form.Item>
-          <Form.Item
-            name="notes"
-            label={<span style={{ fontWeight: 600 }}>📝 Izoh (ixtiyoriy)</span>}
-          >
-            <Input.TextArea
-              rows={2} style={{ borderRadius: 8 }}
-              placeholder="Qo'shimcha ma'lumot..."
-            />
-          </Form.Item>
         </Form>
       </Modal>
 
@@ -533,7 +508,7 @@ function PayoutCard({
 }) {
   const [hovered, setHovered] = useState(false)
   const pal = ownerPalette(payout.ownerId)
-  const canMark = payout.status === 'Pending' || payout.status === 'Processing'
+  const canMark = payout.status === 'Pending'
 
   return (
     <div
