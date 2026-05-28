@@ -74,6 +74,7 @@ export default function SuhbatlarPage() {
   const [msgLoading, setMsgLoading]       = useState(false)
   const [newMsg, setNewMsg]               = useState('')
   const [sending, setSending]             = useState(false)
+  const [closing, setClosing]             = useState(false)
 
   const bottomRef  = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLTextAreaElement>(null)
@@ -84,12 +85,17 @@ export default function SuhbatlarPage() {
     if (!userId) return
     setLoading(true)
     try {
-      const res = await conversationsApi.getAll({ userId, pageSize: 50 })
+      // Admin/Manager: userId filtrisiz → backend barcha suhbatlarni qaytaradi
+      // Customer/Owner: faqat o'z suhbatlarini ko'radi
+      const params = isAdmin
+        ? { pageSize: 100 }
+        : { userId, pageSize: 50 }
+      const res = await conversationsApi.getAll(params)
       setConversations(res.data.items)
     } finally {
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, isAdmin])
 
   useEffect(() => { loadConversations() }, [loadConversations])
 
@@ -152,6 +158,20 @@ export default function SuhbatlarPage() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  // ── Admin: suhbatni yopish ────────────────────────────────────────────────
+  const handleClose = async () => {
+    if (!activeId) return
+    setClosing(true)
+    try {
+      await conversationsApi.close(activeId)
+      setConversations(prev =>
+        prev.map(c => c.id === activeId ? { ...c, status: 'Closed' as ConversationStatus } : c)
+      )
+    } finally {
+      setClosing(false)
     }
   }
 
@@ -575,6 +595,19 @@ export default function SuhbatlarPage() {
                 )}
               </div>
             </div>
+
+            {/* Admin: suhbatni yopish tugmasi */}
+            {isAdmin && !isClosed && (
+              <Button
+                size="small"
+                danger
+                loading={closing}
+                onClick={handleClose}
+                style={{ borderRadius: 8, fontSize: 12, flexShrink: 0 }}
+              >
+                Yopish
+              </Button>
+            )}
           </div>
 
           {/* ── Messages area ── */}
