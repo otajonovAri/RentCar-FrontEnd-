@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^5.5.1",
     "@hookform/resolvers": "^3.9.1",
+    "@microsoft/signalr": "^10.0.0",
     "@react-oauth/google": "^0.13.5",
     "@tanstack/react-table": "^8.20.5",
     "antd": "^5.21.6",

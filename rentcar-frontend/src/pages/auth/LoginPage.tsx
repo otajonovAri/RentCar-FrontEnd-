@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { Input, Button, Typography, Alert, Divider } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
-import { useGoogleLogin } from '@react-oauth/google'
+import { GoogleLogin } from '@react-oauth/google'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,8 +28,8 @@ export default function LoginPage() {
   const [error,         setError]        = useState<string | null>(null)
   const [deletedRedirect, setDeletedRedirect] = useState(false)
   const [countdown,     setCountdown]    = useState(5)
-  const [loading,       setLoading]      = useState(false)
-  const [gLoading,      setGLoading]     = useState(false)
+  const [loading,  setLoading]  = useState(false)
+  const [gLoading, setGLoading] = useState(false)
 
   // /login?reason=deleted dan kelgan bo'lsa — avtoredirect
   useEffect(() => {
@@ -90,23 +90,20 @@ export default function LoginPage() {
     } finally { setLoading(false) }
   }
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setError(null); setGLoading(true)
-      try {
-        const { data } = await authApi.googleLogin(tokenResponse.access_token)
-        redirect(data)
-      } catch (err) {
-        const e = err as AxiosError<ApiError>
-        setError(
-          e.response?.data?.errors?.['detail']?.[0] ??
-          e.response?.data?.detail ??
-          'Google orqali kirishda xatolik.'
-        )
-      } finally { setGLoading(false) }
-    },
-    onError: () => setError('Google orqali kirishda xatolik yuz berdi.'),
-  })
+  const handleGoogleSuccess = async (credential: string) => {
+    setError(null); setGLoading(true)
+    try {
+      const { data } = await authApi.googleLogin(credential)
+      redirect(data)
+    } catch (err) {
+      const e = err as AxiosError<ApiError>
+      setError(
+        e.response?.data?.errors?.['detail']?.[0] ??
+        e.response?.data?.detail ??
+        'Google orqali kirishda xatolik.'
+      )
+    } finally { setGLoading(false) }
+  }
 
   /* ── Theme ─────────────────────────────────────────────── */
   const pageBg   = isDark
@@ -117,21 +114,6 @@ export default function LoginPage() {
     ? '0 4px 32px rgba(0,0,0,0.4)'
     : '0 4px 32px rgba(0,0,0,0.08)'
   const titleColor = isDark ? '#ffffff' : '#111111'
-  const googleBtnStyle: React.CSSProperties = {
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            8,
-    height:         44,
-    borderRadius:   8,
-    border:         isDark ? '1.5px solid #333' : '1.5px solid #e0e0e0',
-    background:     isDark ? '#1f1f1f' : '#ffffff',
-    fontWeight:     500,
-    fontSize:       14,
-    color:          isDark ? '#e0e0e0' : '#333333',
-    boxShadow:      isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
-    width:          '100%',
-  }
 
   return (
     <div style={{
@@ -207,26 +189,23 @@ export default function LoginPage() {
           />
         )}
 
-        {/* Google tugmasi */}
-        <Button
-          size="large"
-          block
-          loading={gLoading}
-          onClick={() => googleLogin()}
-          style={googleBtnStyle}
-          icon={
-            !gLoading && (
-              <svg width="18" height="18" viewBox="0 0 18 18" style={{ flexShrink: 0 }}>
-                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
-                <path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/>
-                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-              </svg>
-            )
-          }
-        >
-          Google bilan kirish
-        </Button>
+        {/* Google tugmasi — GoogleLogin component (idToken qaytaradi) */}
+        <div style={{ opacity: gLoading ? 0.6 : 1, pointerEvents: gLoading ? 'none' : 'auto' }}>
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              if (credentialResponse.credential) {
+                handleGoogleSuccess(credentialResponse.credential)
+              }
+            }}
+            onError={() => setError('Google orqali kirishda xatolik yuz berdi.')}
+            theme={isDark ? 'filled_black' : 'outline'}
+            size="large"
+            width="324"
+            text="signin_with"
+            shape="rectangular"
+            locale="uz"
+          />
+        </div>
 
         <Divider style={{ margin: '16px 0' }}>
           <Text type="secondary" style={{ fontSize: 12 }}>yoki</Text>

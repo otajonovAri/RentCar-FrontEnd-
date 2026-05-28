@@ -6,6 +6,12 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App'
 import './index.css'
 import { useThemeStore } from './store/themeStore'
+import { signalRService } from './services/signalRService'
+
+// Sahifa qayta yuklanganda — agar token bor bo'lsa SignalR'ga ulanish
+if (localStorage.getItem('accessToken')) {
+  signalRService.connect().catch(() => {})
+}
 
 function Root() {
   const isDark = useThemeStore((s) => s.isDark)

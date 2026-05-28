@@ -9,7 +9,9 @@
       "Bash(dotnet ef *)",
       "Bash(mkdir -p \"D:\\\\RentalCarSolution\\\\src\\\\RentCar.Application\\\\Features\\\\Auth\\\\Commands\\\\ForgotPassword\")",
       "Bash(mkdir -p \"D:\\\\RentalCarSolution\\\\src\\\\RentCar.Application\\\\Features\\\\Auth\\\\Commands\\\\ResetPassword\")",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)"
     ]
   }
 }

@@ -3,13 +3,17 @@ export type PaymentMethod = 'Cash' | 'CreditCard' | 'DebitCard' | 'BankTransfer'
 export type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded'
 
 export interface PaymentDto {
-  id: number
-  rentalId: number
-  amount: number
-  method: PaymentMethod
-  status: PaymentStatus
-  transactionId: string | null
-  createdAt: string
+  id:              number
+  rentalId:        number
+  amount:          number
+  method:          PaymentMethod
+  status:          PaymentStatus
+  transactionId:   string | null
+  externalOrderId: string | null
+  createdAt:       string
+  paidAt:          string | null
+  refundedAt:      string | null
+  refundReason:    string | null
 }
 
 export interface PendingPaymentDto {
@@ -24,8 +28,22 @@ export interface PendingPaymentDto {
 }
 
 export interface CreatePaymentDto {
+  rentalId:          number
+  method:            PaymentMethod
+  transactionId?:    string | null
+  requiresApproval?: boolean
+}
+
+export interface InitiatePaymentDto {
   rentalId: number
-  method: PaymentMethod
-  transactionId?: string | null
-  requiresApproval?: boolean   // true → Pending (admin tasdiqlanishi kerak)
+  method:   'Payme' | 'Click'
+}
+
+export interface InitiatePaymentResponse {
+  paymentId:   number
+  redirectUrl: string
+}
+
+export interface RefundPaymentDto {
+  reason: string
 }

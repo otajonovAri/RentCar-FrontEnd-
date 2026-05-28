@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { UserRole } from '@/types/auth'
+import { signalRService } from '@/services/signalRService'
 
 interface AuthState {
   accessToken:  string | null
@@ -57,6 +58,8 @@ export const useAuthStore = create<AuthState>()(
           avatarUrl:       payload.avatarUrl ?? null,
           isAuthenticated: true,
         })
+        // SignalR'ga ulanish (token factory localStorage'dan oladi)
+        signalRService.connect().catch(() => {})
       },
 
       updateTokens: (accessToken, refreshToken) => {
@@ -72,6 +75,9 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
+
+        // SignalR ulanishini uzish
+        signalRService.disconnect().catch(() => {})
 
         try {
           import('@/api/axiosInstance').then(({ default: api }) => {

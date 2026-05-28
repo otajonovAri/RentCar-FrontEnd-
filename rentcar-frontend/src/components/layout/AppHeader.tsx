@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { notificationsApi } from '@/api/notificationsApi'
+import { signalRService } from '@/services/signalRService'
+import type { SignalRNotification } from '@/services/signalRService'
 
 const { Header } = Layout
 const { Text } = Typography
@@ -44,15 +46,13 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
   const [bellShakeKey, setBellShakeKey] = useState(0)
   const prevNotifRef = useRef(0)
 
+  // Initial count fetch (birinchi render uchun)
   const loadCounts = useCallback(() => {
     if (!userId) return
     notificationsApi.getAll({ userId, page: 1, pageSize: 1, unreadOnly: true })
       .then(r => {
         const count = r.data.totalCount
         setUnreadNotif(count)
-        if (count > prevNotifRef.current) {
-          setBellShakeKey(k => k + 1)
-        }
         prevNotifRef.current = count
       })
       .catch(() => {})
@@ -60,9 +60,42 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
 
   useEffect(() => {
     loadCounts()
-    const t = setInterval(loadCounts, 15_000)
-    return () => clearInterval(t)
   }, [loadCounts])
+
+  // ── SignalR real-time bildirishnomalar ───────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return
+
+    // Yangi bildirishnoma keldi → badge oshirish + bell shake
+    const onReceiveNotification = (_notif: SignalRNotification) => {
+      setUnreadNotif(prev => {
+        const next = prev + 1
+        prevNotifRef.current = next
+        setBellShakeKey(k => k + 1)
+        return next
+      })
+    }
+
+    // Server unread count yubordi (masalan, boshqa qurilmada o'qilganda)
+    const onUnreadCountUpdated = (count: number) => {
+      if (count === -1) {
+        // Backend qayta hisoblashni so'radi
+        loadCounts()
+      } else {
+        if (count > prevNotifRef.current) setBellShakeKey(k => k + 1)
+        prevNotifRef.current = count
+        setUnreadNotif(count)
+      }
+    }
+
+    signalRService.on('ReceiveNotification',  onReceiveNotification)
+    signalRService.on('UnreadCountUpdated',   onUnreadCountUpdated)
+
+    return () => {
+      signalRService.off('ReceiveNotification', onReceiveNotification)
+      signalRService.off('UnreadCountUpdated',  onUnreadCountUpdated)
+    }
+  }, [userId, loadCounts])
 
   const initials = (fullName ?? 'U')
     .split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
