@@ -39,6 +39,39 @@ export default function FinesPage() {
   const [payingFine,   setPayingFine]   = useState<FineDto | null>(null)
   const [payLoading,   setPayLoading]   = useState<number | null>(null)
   const [hovered,      setHovered]      = useState<number | null>(null)
+  // ── Bulk selection ──────────────────────────────────────────────────────────
+  const [bulkMode,     setBulkMode]     = useState(false)
+  const [selectedIds,  setSelectedIds]  = useState<Set<number>>(new Set())
+  const [bulkLoading,  setBulkLoading]  = useState(false)
+
+  const toggleSelect = (id: number) =>
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+
+  const toggleSelectAll = () => {
+    const unpaidIds = items.filter(f => f.status === 'Unpaid').map(f => f.id)
+    const allSelected = unpaidIds.every(id => selectedIds.has(id))
+    setSelectedIds(allSelected ? new Set() : new Set(unpaidIds))
+  }
+
+  const exitBulk = () => { setBulkMode(false); setSelectedIds(new Set()) }
+
+  const handleBulkPay = async () => {
+    if (selectedIds.size === 0) return
+    setBulkLoading(true)
+    let successCount = 0
+    for (const id of selectedIds) {
+      try { await finesApi.pay(id); successCount++ } catch { /* skip failed */ }
+    }
+    message.success(`✅ ${successCount} ta jarima to'landi deb belgilandi`)
+    exitBulk()
+    fetchData()
+    setBulkLoading(false)
+  }
+
   const { page, pageSize, onChange, reset } = usePagination()
 
   const fetchData = useCallback(async () => {
@@ -159,25 +192,40 @@ export default function FinesPage() {
               </div>
             )}
 
-            {/* Add button (admin only) */}
-            {isManager && (
-              <Button
-                icon={<PlusOutlined/>}
-                size="large"
-                onClick={() => setModalOpen(true)}
-                style={{
-                  background:'rgba(255,255,255,0.2)',
-                  backdropFilter:'blur(8px)',
-                  border:'1px solid rgba(255,255,255,0.35)',
-                  color:'#fff',
-                  borderRadius:10,
-                  fontWeight:600,
-                  flexShrink:0,
-                }}
-              >
-                {isMobile ? '' : "Jarima qo'shish"}
-              </Button>
-            )}
+            {/* Admin actions */}
+            <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+              {/* Bulk mode toggle (admin only) */}
+              {isManager && items.some(f => f.status === 'Unpaid') && (
+                <Button
+                  size="large"
+                  onClick={() => bulkMode ? exitBulk() : setBulkMode(true)}
+                  style={{
+                    background: bulkMode ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter:'blur(8px)',
+                    border: `1px solid ${bulkMode ? '#fff' : 'rgba(255,255,255,0.3)'}`,
+                    color:'#fff', borderRadius:10, fontWeight: bulkMode ? 700 : 500,
+                  }}
+                >
+                  {bulkMode ? `✓ ${selectedIds.size} tanlangan` : '☑ Tanlash'}
+                </Button>
+              )}
+
+              {isManager && (
+                <Button
+                  icon={<PlusOutlined/>}
+                  size="large"
+                  onClick={() => setModalOpen(true)}
+                  style={{
+                    background:'rgba(255,255,255,0.2)',
+                    backdropFilter:'blur(8px)',
+                    border:'1px solid rgba(255,255,255,0.35)',
+                    color:'#fff', borderRadius:10, fontWeight:600,
+                  }}
+                >
+                  {isMobile ? '' : "Jarima qo'shish"}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Status filter chips */}
@@ -260,17 +308,39 @@ export default function FinesPage() {
         </div>
       ) : (
         <>
-          {/* Results count */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-            <span style={{ fontSize:13, color:token.colorTextSecondary }}>
-              <strong style={{ color:token.colorText }}>{total}</strong> ta natija
-            </span>
-            {pendingSum > 0 && (
+          {/* Results header */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, gap:8, flexWrap:'wrap' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <span style={{ fontSize:13, color:token.colorTextSecondary }}>
+                <strong style={{ color:token.colorText }}>{total}</strong> ta natija
+              </span>
+
+              {/* Bulk mode: select-all toggle */}
+              {bulkMode && isManager && (() => {
+                const unpaidItems = items.filter(f => f.status === 'Unpaid')
+                const allSelected = unpaidItems.length > 0 && unpaidItems.every(f => selectedIds.has(f.id))
+                return (
+                  <button
+                    onClick={toggleSelectAll}
+                    style={{
+                      display:'inline-flex', alignItems:'center', gap:6,
+                      padding:'3px 12px', borderRadius:20, cursor:'pointer',
+                      border:`1.5px solid ${allSelected ? '#1677ff' : token.colorBorderSecondary}`,
+                      background: allSelected ? 'rgba(22,119,255,0.08)' : token.colorFillAlter,
+                      color: allSelected ? '#1677ff' : token.colorTextSecondary,
+                      fontWeight:600, fontSize:12,
+                    }}
+                  >
+                    {allSelected ? '☑' : '☐'} Hammasini tanlash
+                  </button>
+                )
+              })()}
+            </div>
+
+            {pendingSum > 0 && !bulkMode && (
               <span style={{
-                fontSize:12, fontWeight:700,
-                color:'#ff4d4f',
-                background:'rgba(255,77,79,0.08)',
-                border:'1px solid rgba(255,77,79,0.2)',
+                fontSize:12, fontWeight:700, color:'#ff4d4f',
+                background:'rgba(255,77,79,0.08)', border:'1px solid rgba(255,77,79,0.2)',
                 padding:'3px 12px', borderRadius:20,
               }}>
                 💸 {fmt(pendingSum)} so'm to'lanmagan
@@ -286,22 +356,47 @@ export default function FinesPage() {
 
               /* ── MOBILE: compact fine card ──────────────────────────── */
               if (isMobile) {
+                const isSelected = selectedIds.has(fine.id)
                 return (
                   <div
                     key={fine.id}
+                    onClick={() => bulkMode && fine.status === 'Unpaid' && toggleSelect(fine.id)}
                     style={{
                       background:    token.colorBgContainer,
                       borderRadius:  14,
-                      border:        `1.5px solid ${fine.status === 'Unpaid' ? 'rgba(255,77,79,0.3)' : token.colorBorderSecondary}`,
+                      border:        `1.5px solid ${
+                        isSelected ? '#1677ff'
+                        : fine.status === 'Unpaid' ? 'rgba(255,77,79,0.3)'
+                        : token.colorBorderSecondary
+                      }`,
                       overflow:      'hidden',
-                      boxShadow:     fine.status === 'Unpaid'
-                        ? '0 2px 10px rgba(255,77,79,0.1)'
-                        : '0 1px 6px rgba(0,0,0,0.06)',
+                      boxShadow:     isSelected
+                        ? '0 2px 12px rgba(22,119,255,0.18)'
+                        : fine.status === 'Unpaid'
+                          ? '0 2px 10px rgba(255,77,79,0.1)'
+                          : '0 1px 6px rgba(0,0,0,0.06)',
                       display:       'flex',
                       flexDirection: 'column',
                       opacity:       fine.status === 'Paid' ? 0.65 : 1,
+                      cursor:        bulkMode && fine.status === 'Unpaid' ? 'pointer' : 'default',
+                      transition:    'border-color 0.15s, box-shadow 0.15s',
+                      position:      'relative',
                     }}
                   >
+                    {/* Bulk checkbox overlay */}
+                    {bulkMode && fine.status === 'Unpaid' && (
+                      <div style={{
+                        position: 'absolute', top: 10, right: 10, zIndex: 2,
+                        width: 20, height: 20, borderRadius: 6,
+                        border: `2px solid ${isSelected ? '#1677ff' : token.colorBorderSecondary}`,
+                        background: isSelected ? '#1677ff' : token.colorBgContainer,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 12, color: '#fff',
+                        transition: 'all 0.15s',
+                      }}>
+                        {isSelected ? '✓' : ''}
+                      </div>
+                    )}
                     <div style={{ height:3, background:cfg.color }}/>
 
                     <div style={{ padding:'11px 13px 12px', display:'flex', flexDirection:'column', gap:9 }}>
@@ -443,26 +538,51 @@ export default function FinesPage() {
               }
 
               /* ── DESKTOP: original card ──────────────────────────────── */
+              const isSelected = selectedIds.has(fine.id)
               return (
                 <div
                   key={fine.id}
                   onMouseEnter={() => setHovered(fine.id)}
                   onMouseLeave={() => setHovered(null)}
+                  onClick={() => bulkMode && fine.status === 'Unpaid' && toggleSelect(fine.id)}
                   style={{
                     background:    token.colorBgContainer,
                     borderRadius:  16,
-                    border:        `1.5px solid ${isHov ? cfg.color : token.colorBorderSecondary}`,
+                    border:        `1.5px solid ${
+                      isSelected ? '#1677ff'
+                      : isHov ? cfg.color
+                      : token.colorBorderSecondary
+                    }`,
                     overflow:      'hidden',
-                    transform:     isHov ? 'translateY(-4px)' : 'translateY(0)',
-                    boxShadow:     isHov
-                      ? `0 16px 40px ${cfg.color}22, 0 4px 12px rgba(0,0,0,0.08)`
-                      : '0 2px 8px rgba(0,0,0,0.05)',
+                    transform:     isHov && !bulkMode ? 'translateY(-4px)' : 'translateY(0)',
+                    boxShadow:     isSelected
+                      ? '0 6px 20px rgba(22,119,255,0.2)'
+                      : isHov && !bulkMode
+                        ? `0 16px 40px ${cfg.color}22, 0 4px 12px rgba(0,0,0,0.08)`
+                        : '0 2px 8px rgba(0,0,0,0.05)',
                     transition:    'all 0.22s cubic-bezier(0.4,0,0.2,1)',
                     display:       'flex',
                     flexDirection: 'column',
                     opacity:       fine.status === 'Paid' ? 0.65 : 1,
+                    cursor:        bulkMode && fine.status === 'Unpaid' ? 'pointer' : 'default',
+                    position:      'relative',
                   }}
                 >
+                  {/* Bulk checkbox overlay */}
+                  {bulkMode && fine.status === 'Unpaid' && (
+                    <div style={{
+                      position:   'absolute', top: 12, right: 12, zIndex: 2,
+                      width:       22, height: 22, borderRadius: 7,
+                      border:     `2px solid ${isSelected ? '#1677ff' : token.colorBorderSecondary}`,
+                      background:  isSelected ? '#1677ff' : token.colorBgContainer,
+                      display:    'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize:   13, color: '#fff',
+                      boxShadow:   isSelected ? '0 2px 8px rgba(22,119,255,0.3)' : 'none',
+                      transition:  'all 0.15s',
+                    }}>
+                      {isSelected ? '✓' : ''}
+                    </div>
+                  )}
                   {/* Status color bar */}
                   <div style={{ height:4, background:cfg.color }}/>
 
@@ -654,6 +774,55 @@ export default function FinesPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ── BULK ACTION BAR ───────────────────────────────────────────────── */}
+      {bulkMode && selectedIds.size > 0 && (
+        <div style={{
+          position:      'fixed',
+          bottom:        isMobile ? 76 : 24,
+          left:          '50%',
+          transform:     'translateX(-50%)',
+          zIndex:        200,
+          display:       'flex',
+          alignItems:    'center',
+          gap:           12,
+          padding:       '12px 20px',
+          borderRadius:  16,
+          background:    token.colorBgContainer,
+          boxShadow:     '0 8px 32px rgba(0,0,0,0.2)',
+          border:        `1.5px solid ${token.colorBorderSecondary}`,
+          flexWrap:      'wrap',
+          justifyContent:'center',
+          maxWidth:      'calc(100vw - 32px)',
+        }}>
+          <div style={{ fontSize:13, color:token.colorText }}>
+            <strong style={{ color:'#1677ff' }}>{selectedIds.size}</strong> ta tanlangan
+            {' · '}
+            <strong style={{ color:'#ff4d4f' }}>
+              {fmt(items.filter(f => selectedIds.has(f.id)).reduce((s, f) => s + f.amount, 0))} so'm
+            </strong>
+          </div>
+
+          {isManager && (
+            <Button
+              type="primary"
+              icon={<CheckOutlined/>}
+              loading={bulkLoading}
+              onClick={handleBulkPay}
+              style={{
+                background: '#52c41a', borderColor: '#52c41a',
+                borderRadius: 10, fontWeight: 600, height: 36,
+              }}
+            >
+              {bulkLoading ? 'Tasdiqlanmoqda...' : "To'landi deb belgilash"}
+            </Button>
+          )}
+
+          <Button size="small" onClick={exitBulk} style={{ borderRadius: 8 }}>
+            Bekor
+          </Button>
+        </div>
       )}
 
       <FineFormModal

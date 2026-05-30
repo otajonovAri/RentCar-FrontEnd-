@@ -58,3 +58,103 @@ body {
     padding: 12px !important;
   }
 }
+
+/* ── Error page animations ─────────────────────────────────────────────────── */
+@keyframes error-float {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-18px); }
+}
+
+@keyframes error-emoji-in {
+  0%   { transform: scale(0.2) rotate(-15deg); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(6deg);  opacity: 1; }
+  80%  { transform: scale(0.92) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg);     opacity: 1; }
+}
+
+.error-404-float {
+  animation: error-float 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.error-emoji-bounce {
+  display: inline-block;
+  animation: error-emoji-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s both;
+}
+
+/* ── Global search panel entrance ─────────────────────────────────────────── */
+@keyframes search-panel-in {
+  from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+.global-search-panel {
+  animation: search-panel-in 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Print styles ──────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide all layout chrome */
+  .ant-layout-sider,
+  .ant-layout-header,
+  .app-header,
+  .app-sider,
+  .no-print,
+  .ant-btn:not(.print-keep),
+  button:not(.print-keep),
+  nav {
+    display: none !important;
+  }
+
+  /* Body reset */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  /* Full-width content */
+  .ant-layout,
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: unset !important;
+    background: #fff !important;
+  }
+
+  /* Page break helpers */
+  .print-break-before { page-break-before: always; }
+  .print-break-after  { page-break-after:  always; }
+  .print-no-break     { page-break-inside: avoid;  }
+
+  /* Print-only elements */
+  .print-only         { display: block !important; }
+
+  /* Rental invoice print area */
+  .print-invoice {
+    max-width: 760px;
+    margin: 0 auto;
+    font-family: 'Arial', sans-serif;
+    color: #111;
+  }
+  .print-invoice h1 { font-size: 20pt; margin-bottom: 4px; }
+  .print-invoice h2 { font-size: 14pt; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+  .print-invoice table { width: 100%; border-collapse: collapse; }
+  .print-invoice td, .print-invoice th {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    font-size: 10pt;
+  }
+  .print-invoice th { background: #f5f5f5; font-weight: bold; }
+  .print-invoice .print-total {
+    font-size: 14pt;
+    font-weight: bold;
+    border-top: 2px solid #000;
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+}
+
+/* Elements that should only appear in print */
+.print-only {
+  display: none;
+}
