@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import type { AuthResponseDto, RefreshTokenDto } from '@/types/auth'
+import { getStoredLanguage } from '@/store/languageStore'
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -8,12 +9,17 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Request interceptor: inject Bearer token ──────────────────────────────────
+// ── Request interceptor: inject Bearer token + Accept-Language ────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  // Auth token
   const token = localStorage.getItem('accessToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Til — har so'rovda yangi o'qiladi (til o'zgarganda darhol ishlaydi)
+  config.headers['Accept-Language'] = getStoredLanguage()
+
   return config
 })
 

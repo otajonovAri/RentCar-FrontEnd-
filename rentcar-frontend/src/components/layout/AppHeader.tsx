@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   Layout, Button, Avatar, Typography, Space,
-  Tooltip, theme, Grid, Badge,
+  Tooltip, theme, Grid, Badge, Dropdown,
 } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   MenuFoldOutlined, MenuUnfoldOutlined,
   SunOutlined, MoonOutlined,
@@ -11,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore }          from '@/store/authStore'
 import { useThemeStore }         from '@/store/themeStore'
+import { useLanguageStore, LANGUAGES, type AppLanguage } from '@/store/languageStore'
 import { notificationsApi }      from '@/api/notificationsApi'
 import { signalRService }        from '@/services/signalRService'
 import type { SignalRNotification } from '@/services/signalRService'
@@ -37,11 +39,34 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
   const navigate = useNavigate()
   const { fullName, role, userId, avatarUrl } = useAuthStore()
   const { isDark, toggle } = useThemeStore()
+  const { language, setLanguage } = useLanguageStore()
   const { token }  = theme.useToken()
   const screens    = Grid.useBreakpoint()
   const isMobile   = !screens.lg
 
   const isClient = role === 'Customer' || role === 'Owner'
+
+  // ── Language switcher ────────────────────────────────────────────────────
+  const currentLang = LANGUAGES.find(l => l.code === language) ?? LANGUAGES[0]
+
+  const langMenuItems: MenuProps['items'] = LANGUAGES.map(lang => ({
+    key:   lang.code,
+    label: (
+      <Space size={8}>
+        <span style={{ fontSize: 18, lineHeight: 1 }}>{lang.flag}</span>
+        <span style={{ fontWeight: lang.code === language ? 600 : 400 }}>
+          {lang.label}
+        </span>
+        {lang.code === language && (
+          <span style={{ fontSize: 10, color: token.colorPrimary, marginLeft: 2 }}>✓</span>
+        )}
+      </Space>
+    ),
+  }))
+
+  const onLangSelect: MenuProps['onClick'] = ({ key }) => {
+    setLanguage(key as AppLanguage)
+  }
 
   // ── Global Search state ──────────────────────────────────────────────────
   const [searchOpen, setSearchOpen] = useState(false)
@@ -178,8 +203,38 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
           )}
         </div>
 
-        {/* ── Right: theme + bell + user ────────────────────────────────── */}
+        {/* ── Right: lang + theme + bell + user ────────────────────────── */}
         <Space size={4}>
+
+          {/* 🌐 Language switcher */}
+          <Dropdown
+            menu={{ items: langMenuItems, onClick: onLangSelect }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Tooltip title="Tilni o'zgartirish">
+              <Button
+                type="text"
+                style={{
+                  height: 40, padding: '0 10px',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  borderRadius: 8,
+                }}
+              >
+                <span style={{ fontSize: 17, lineHeight: 1 }}>{currentLang.flag}</span>
+                {!isMobile && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                    color: token.colorTextSecondary,
+                  }}>
+                    {currentLang.short}
+                  </span>
+                )}
+              </Button>
+            </Tooltip>
+          </Dropdown>
+
+          {/* 🌙 Theme toggle */}
           <Tooltip title={isDark ? 'Kunduzgi rejim' : 'Tungi rejim'}>
             <Button
               type="text" shape="circle"
