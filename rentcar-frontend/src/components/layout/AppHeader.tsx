@@ -10,6 +10,7 @@ import {
   BellOutlined, SearchOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore }          from '@/store/authStore'
 import { useThemeStore }         from '@/store/themeStore'
 import { useLanguageStore, LANGUAGES, type AppLanguage } from '@/store/languageStore'
@@ -22,13 +23,6 @@ import GlobalSearch              from '@/components/GlobalSearch'
 const { Header } = Layout
 const { Text }   = Typography
 
-const ROLE_LABELS: Record<string, string> = {
-  SuperAdmin: 'Super Admin',
-  Admin:      'Administrator',
-  Manager:    'Menejer',
-  Owner:      'Egasi',
-  Customer:   'Mijoz',
-}
 
 interface AppHeaderProps {
   collapsed: boolean
@@ -36,6 +30,7 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
+  const { t }    = useTranslation()
   const navigate = useNavigate()
   const { fullName, role, userId, avatarUrl } = useAuthStore()
   const { isDark, toggle } = useThemeStore()
@@ -183,7 +178,7 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
 
           {!isMobile && (
             <span style={{ flex: 1, fontSize: 13, color: token.colorTextTertiary }}>
-              Qidirish...
+              {t('header.search-placeholder')}
             </span>
           )}
 
@@ -212,7 +207,7 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
             trigger={['click']}
             placement="bottomRight"
           >
-            <Tooltip title="Tilni o'zgartirish">
+            <Tooltip title={t('header.change-language')}>
               <Button
                 type="text"
                 style={{
@@ -235,7 +230,7 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
           </Dropdown>
 
           {/* 🌙 Theme toggle */}
-          <Tooltip title={isDark ? 'Kunduzgi rejim' : 'Tungi rejim'}>
+          <Tooltip title={isDark ? t('header.light-mode') : t('header.dark-mode')}>
             <Button
               type="text" shape="circle"
               icon={isDark
@@ -281,7 +276,7 @@ export default function AppHeader({ collapsed, onToggle }: AppHeaderProps) {
               <div style={{ display: screens?.sm ? 'flex' : 'none', flexDirection: 'column', lineHeight: 1.3 }}>
                 <Text strong style={{ fontSize: 13 }}>{fullName}</Text>
                 <Text type="secondary" style={{ fontSize: 11 }}>
-                  {ROLE_LABELS[role ?? ''] ?? role}
+                  {t(`roles.${role ?? 'Customer'}`)}
                 </Text>
               </div>
             </Space>

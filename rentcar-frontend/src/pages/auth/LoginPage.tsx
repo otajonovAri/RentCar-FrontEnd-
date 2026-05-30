@@ -6,6 +6,7 @@ import { GoogleLogin } from '@react-oauth/google'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '@/api/authApi'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
@@ -14,28 +15,35 @@ import { AxiosError } from 'axios'
 
 const { Title, Text } = Typography
 
-const loginSchema = z.object({
-  email:    z.string().email("To'g'ri email kiriting"),
-  password: z.string().min(1, 'Parol kiritilishi shart'),
-})
-type LoginForm = z.infer<typeof loginSchema>
-
 export default function LoginPage() {
+  const { t }           = useTranslation()
   const navigate        = useNavigate()
   const [searchParams]  = useSearchParams()
   const setAuth         = useAuthStore((s) => s.setAuth)
   const isDark          = useThemeStore((s) => s.isDark)
-  const [error,         setError]        = useState<string | null>(null)
-  const [deletedRedirect, setDeletedRedirect] = useState(false)
-  const [countdown,     setCountdown]    = useState(5)
+  const [error,            setError]           = useState<string | null>(null)
+  const [deletedRedirect,  setDeletedRedirect]  = useState(false)
+  const [countdown,        setCountdown]        = useState(5)
   const [loading,  setLoading]  = useState(false)
   const [gLoading, setGLoading] = useState(false)
+
+  // Zod schema — t() bilan xabarlar
+  const loginSchema = z.object({
+    email:    z.string().email(t('auth.email-invalid')),
+    password: z.string().min(1, t('auth.password-required')),
+  })
+  type LoginForm = z.infer<typeof loginSchema>
+
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+    resolver:      zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  })
 
   // /login?reason=deleted dan kelgan bo'lsa — avtoredirect
   useEffect(() => {
     if (searchParams.get('reason') === 'deleted') {
       setDeletedRedirect(true)
-      setError("ACCOUNT_DELETED|Hisobingiz o'chirilgan.")
+      setError('ACCOUNT_DELETED|')
     }
   }, [searchParams])
 
@@ -43,14 +51,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (!deletedRedirect) return
     if (countdown <= 0) { navigate('/register', { replace: true }); return }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(timer)
   }, [deletedRedirect, countdown, navigate])
-
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-    resolver:      zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  })
 
   const redirect = (data: AuthResponseDto) => {
     setAuth({
@@ -74,12 +77,11 @@ export default function LoginPage() {
       const { data } = await authApi.login(v)
       redirect(data)
     } catch (err) {
-      const e    = err as AxiosError<ApiError>
-      // Middleware: { errors: { detail: ["msg"] } } yoki { detail: "msg" }
+      const e      = err as AxiosError<ApiError>
       const detail =
         e.response?.data?.errors?.['detail']?.[0] ??
         e.response?.data?.detail ??
-        "Email yoki parol noto'g'ri."
+        t('auth.default-error')
       if (detail.startsWith('ACCOUNT_DELETED|')) {
         setDeletedRedirect(true)
         setCountdown(5)
@@ -100,19 +102,15 @@ export default function LoginPage() {
       setError(
         e.response?.data?.errors?.['detail']?.[0] ??
         e.response?.data?.detail ??
-        'Google orqali kirishda xatolik.'
+        t('auth.google-error')
       )
     } finally { setGLoading(false) }
   }
 
   /* ── Theme ─────────────────────────────────────────────── */
-  const pageBg   = isDark
-    ? '#0a0a0a'
-    : 'linear-gradient(135deg, #f0f4ff 0%, #f5f5f5 100%)'
-  const cardBg   = isDark ? '#141414' : '#ffffff'
-  const cardShadow = isDark
-    ? '0 4px 32px rgba(0,0,0,0.4)'
-    : '0 4px 32px rgba(0,0,0,0.08)'
+  const pageBg     = isDark ? '#0a0a0a' : 'linear-gradient(135deg, #f0f4ff 0%, #f5f5f5 100%)'
+  const cardBg     = isDark ? '#141414' : '#ffffff'
+  const cardShadow = isDark ? '0 4px 32px rgba(0,0,0,0.4)' : '0 4px 32px rgba(0,0,0,0.08)'
   const titleColor = isDark ? '#ffffff' : '#111111'
 
   return (
@@ -145,12 +143,13 @@ export default function LoginPage() {
         </div>
 
         <Title level={3} style={{ margin: '0 0 4px', textAlign: 'center', fontSize: 20, color: titleColor }}>
-          Xush kelibsiz
+          {t('auth.welcome')}
         </Title>
         <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 24, fontSize: 13 }}>
-          Hisobingizga kiring
+          {t('auth.sign-in-subtitle')}
         </Text>
 
+        {/* Xato xabari */}
         {error && !deletedRedirect && (
           <Alert
             message={error}
@@ -162,19 +161,20 @@ export default function LoginPage() {
           />
         )}
 
+        {/* Hisob o'chirilgan ogohlantirish */}
         {deletedRedirect && (
           <Alert
             type="warning"
             showIcon
             style={{ marginBottom: 16, borderRadius: 8 }}
-            message="Hisobingiz o'chirilgan"
+            message={t('auth.account-deleted-title')}
             description={
               <div>
                 <p style={{ margin: '4px 0 8px' }}>
-                  Siz xuddi shu email bilan qayta ro'yxatdan o'tishingiz mumkin.
+                  {t('auth.account-deleted-desc')}
                 </p>
                 <p style={{ margin: 0, color: '#8c8c8c', fontSize: 12 }}>
-                  {countdown} soniyadan so'ng avtomatik yo'naltirilasiz...
+                  {t('auth.redirect-countdown', { count: countdown })}
                 </p>
                 <Button
                   type="primary"
@@ -182,14 +182,14 @@ export default function LoginPage() {
                   onClick={() => navigate('/register', { replace: true })}
                   style={{ marginTop: 8 }}
                 >
-                  Hozir ro'yxatdan o'tish
+                  {t('auth.register-now')}
                 </Button>
               </div>
             }
           />
         )}
 
-        {/* Google tugmasi — GoogleLogin component (idToken qaytaradi) */}
+        {/* Google login */}
         <div style={{ opacity: gLoading ? 0.6 : 1, pointerEvents: gLoading ? 'none' : 'auto' }}>
           <GoogleLogin
             onSuccess={(credentialResponse) => {
@@ -197,7 +197,7 @@ export default function LoginPage() {
                 handleGoogleSuccess(credentialResponse.credential)
               }
             }}
-            onError={() => setError('Google orqali kirishda xatolik yuz berdi.')}
+            onError={() => setError(t('auth.google-error'))}
             theme={isDark ? 'filled_black' : 'outline'}
             size="large"
             width="324"
@@ -207,7 +207,7 @@ export default function LoginPage() {
         </div>
 
         <Divider style={{ margin: '16px 0' }}>
-          <Text type="secondary" style={{ fontSize: 12 }}>yoki</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{t('auth.or')}</Text>
         </Divider>
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -219,7 +219,7 @@ export default function LoginPage() {
                 <Input
                   {...field}
                   prefix={<MailOutlined style={{ color: '#bbb' }}/>}
-                  placeholder="Email"
+                  placeholder={t('auth.email')}
                   size="large"
                   status={errors.email ? 'error' : ''}
                   style={{ borderRadius: 8 }}
@@ -241,7 +241,7 @@ export default function LoginPage() {
                 <Input.Password
                   {...field}
                   prefix={<LockOutlined style={{ color: '#bbb' }}/>}
-                  placeholder="Parol"
+                  placeholder={t('auth.password')}
                   size="large"
                   status={errors.password ? 'error' : ''}
                   style={{ borderRadius: 8 }}
@@ -263,20 +263,20 @@ export default function LoginPage() {
             loading={loading}
             style={{ borderRadius: 8, fontWeight: 600, marginTop: 4 }}
           >
-            Kirish
+            {t('auth.login-btn')}
           </Button>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <Link to="/forgot-password" style={{ fontSize: 13, color: '#8c8c8c' }}>
-            Parolni unutdingizmi?
+            {t('auth.forgot-password')}
           </Link>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 12 }}>
-          <Text type="secondary" style={{ fontSize: 13 }}>Hisob yo'qmi? </Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>{t('auth.no-account')} </Text>
           <Link to="/register" style={{ fontSize: 13, fontWeight: 500 }}>
-            Ro'yxatdan o'tish
+            {t('auth.register-link')}
           </Link>
         </div>
       </div>
