@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Button, Select, InputNumber, DatePicker, message, theme, Grid } from 'antd'
 import {
   DownloadOutlined, FilePdfFilled, FileExcelFilled, BarChartOutlined,
-  CalendarFilled, DollarCircleFilled, CrownFilled,
+  CrownFilled,
 } from '@ant-design/icons'
-import dayjs, { type Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import {
   reportsApi,
   type RentalReportParams, type PaymentReportParams, type OwnerIncomeParams,

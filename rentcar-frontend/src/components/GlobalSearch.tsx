@@ -306,7 +306,6 @@ export default function GlobalSearch({ open, onClose }: Props) {
                   <Row
                     key={item.key}
                     active={active}
-                    token={token}
                     onClick={() => handleSelect({ type: 'nav', item })}
                     onMouseEnter={() => setActiveIdx(idx)}
                   >
@@ -352,7 +351,6 @@ export default function GlobalSearch({ open, onClose }: Props) {
                   <Row
                     key={car.id}
                     active={active}
-                    token={token}
                     onClick={() => handleSelect({ type: 'car', car })}
                     onMouseEnter={() => setActiveIdx(gIdx)}
                   >
@@ -465,13 +463,12 @@ function SectionLabel({
 
 interface RowProps {
   active:       boolean
-  token:        ReturnType<typeof theme.useToken>['token']
   onClick:      () => void
   onMouseEnter: () => void
   children:     React.ReactNode
 }
 
-function Row({ active, token, onClick, onMouseEnter, children }: RowProps) {
+function Row({ active, onClick, onMouseEnter, children }: RowProps) {
   return (
     <div
       data-active={active}
